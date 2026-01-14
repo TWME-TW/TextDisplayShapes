@@ -179,6 +179,24 @@ public class PacketTriangle implements Shape {
         return new HashSet<>(viewers);
     }
 
+    @Override
+    public List<UUID> getEntityUUIDs() {
+        List<UUID> uuids = new ArrayList<>();
+        for (WrapperEntity entity : entities) {
+            uuids.add(entity.getUuid());
+        }
+        return uuids;
+    }
+
+    /**
+     * 獲取此形狀的所有 WrapperEntity 實體。
+     *
+     * @return WrapperEntity 實體列表
+     */
+    public List<WrapperEntity> getEntities() {
+        return new ArrayList<>(entities);
+    }
+
     /**
      * 建造者類別。
      */

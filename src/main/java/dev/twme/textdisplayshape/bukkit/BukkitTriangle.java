@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * 使用 Bukkit API 直接操作 TextDisplay 實體的三角形實作。
@@ -121,6 +122,24 @@ public class BukkitTriangle implements Shape {
     public Set<Player> getViewers() {
         // 返回空集合，因為 Bukkit 模式對所有玩家可見
         return new HashSet<>();
+    }
+
+    @Override
+    public List<UUID> getEntityUUIDs() {
+        List<UUID> uuids = new ArrayList<>();
+        for (TextDisplay display : displays) {
+            uuids.add(display.getUniqueId());
+        }
+        return uuids;
+    }
+
+    /**
+     * 獲取此形狀的所有 TextDisplay 實體。
+     *
+     * @return TextDisplay 實體列表
+     */
+    public List<TextDisplay> getEntities() {
+        return new ArrayList<>(displays);
     }
 
     /**
