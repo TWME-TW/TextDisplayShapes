@@ -105,6 +105,21 @@ public class TextDisplayUtil {
      * @return the transformation matrix
      */
     public static Matrix4f textDisplayLine(Vector3f point1, Vector3f point2, float thickness) {
+        return textDisplayLine(point1, point2, thickness, 0f);
+    }
+
+    /**
+     * Calculates the transformation matrix for a line with roll angle.
+     * A line is a very thin rectangle, automatically centered based on thickness.
+     * The roll angle rotates the line surface around its length axis.
+     *
+     * @param point1    the start point of the line
+     * @param point2    the end point of the line
+     * @param thickness the thickness of the line
+     * @param roll      the roll angle in radians (rotation around the line axis)
+     * @return the transformation matrix
+     */
+    public static Matrix4f textDisplayLine(Vector3f point1, Vector3f point2, float thickness, float roll) {
         Vector3f direction = new Vector3f(point2).sub(point1);
         float length = direction.length();
 
@@ -123,6 +138,10 @@ public class TextDisplayUtil {
         Vector3f yAxis = new Vector3f(zAxis).cross(xAxis).normalize();
 
         Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+
+        // Apply roll rotation around the line axis (X axis in local space)
+        Quaternionf rollRotation = new Quaternionf().rotateX(roll);
+        rotation = rotation.mul(rollRotation);
 
         // Line transformation: translate to start point, rotate to correct direction,
         // center thickness, scale to correct length and thickness

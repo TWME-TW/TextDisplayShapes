@@ -28,6 +28,7 @@ public class BukkitLine implements Shape {
     private final Vector3f p1;
     private final Vector3f p2;
     private final float thickness;
+    private final float roll;
     private final Color color;
     private final boolean doubleSided;
     private final int blockLight;
@@ -42,6 +43,7 @@ public class BukkitLine implements Shape {
         this.p1 = builder.p1;
         this.p2 = builder.p2;
         this.thickness = builder.thickness;
+        this.roll = builder.roll;
         this.color = builder.color;
         this.doubleSided = builder.doubleSided;
         this.blockLight = builder.blockLight;
@@ -55,12 +57,12 @@ public class BukkitLine implements Shape {
             return;
 
         // Front face: p1 -> p2
-        Matrix4f matrix = TextDisplayUtil.textDisplayLine(p1, p2, thickness);
+        Matrix4f matrix = TextDisplayUtil.textDisplayLine(p1, p2, thickness, roll);
         spawnTextDisplay(matrix);
 
-        // Back face: swap p1 and p2
+        // Back face: swap p1 and p2, and add PI to roll for opposite direction
         if (doubleSided) {
-            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness);
+            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness, roll + (float) Math.PI);
             spawnTextDisplay(backMatrix);
         }
 
@@ -145,6 +147,7 @@ public class BukkitLine implements Shape {
         private final Vector3f p2;
         private final float thickness;
 
+        private float roll = 0f;
         private Color color = Color.fromARGB(200, 255, 100, 100);
         private boolean doubleSided = false;
         private int blockLight = 15;
@@ -156,6 +159,32 @@ public class BukkitLine implements Shape {
             this.p1 = p1;
             this.p2 = p2;
             this.thickness = thickness;
+        }
+
+        /**
+         * Sets the roll angle (rotation around the line axis).
+         * This allows the line surface to face different directions.
+         * Default is 0 (facing up when the line is horizontal).
+         *
+         * @param roll the roll angle in radians
+         * @return this builder
+         */
+        public Builder roll(float roll) {
+            this.roll = roll;
+            return this;
+        }
+
+        /**
+         * Sets the roll angle in degrees (rotation around the line axis).
+         * This allows the line surface to face different directions.
+         * Default is 0 (facing up when the line is horizontal).
+         *
+         * @param degrees the roll angle in degrees
+         * @return this builder
+         */
+        public Builder rollDegrees(float degrees) {
+            this.roll = (float) Math.toRadians(degrees);
+            return this;
         }
 
         @Override
