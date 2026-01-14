@@ -3,50 +3,50 @@ package dev.twme.textdisplayshape.shape;
 import org.bukkit.Color;
 
 /**
- * 形狀建造者的基礎介面。
- * 提供流暢的 API 來配置形狀的外觀屬性。
+ * Base builder interface for creating shapes.
+ * Provides a fluent API to configure shape appearance properties.
  *
- * @param <T> 建造的形狀類型
+ * @param <T> the type of shape to build
  */
 public interface ShapeBuilder<T extends Shape> {
 
     /**
-     * 設定形狀的背景顏色。
+     * Sets the background color of the shape.
      *
-     * @param color 顏色（包含 ARGB）
-     * @return 此建造者
+     * @param color the color (including ARGB)
+     * @return this builder
      */
     ShapeBuilder<T> color(Color color);
 
     /**
-     * 設定是否為雙面顯示。
+     * Sets whether the shape is double-sided.
      *
-     * @param doubleSided true 表示雙面
-     * @return 此建造者
+     * @param doubleSided true for double-sided display
+     * @return this builder
      */
     ShapeBuilder<T> doubleSided(boolean doubleSided);
 
     /**
-     * 設定形狀的亮度。
+     * Sets the brightness of the shape.
      *
-     * @param block 方塊光照等級 (0-15)
-     * @param sky   天空光照等級 (0-15)
-     * @return 此建造者
+     * @param block block light level (0-15)
+     * @param sky   sky light level (0-15)
+     * @return this builder
      */
     ShapeBuilder<T> brightness(int block, int sky);
 
     /**
-     * 設定是否透視（可以透過方塊看到）。
+     * Sets whether the shape can be seen through blocks.
      *
-     * @param seeThrough true 表示可透視
-     * @return 此建造者
+     * @param seeThrough true if visible through blocks
+     * @return this builder
      */
     ShapeBuilder<T> seeThrough(boolean seeThrough);
 
     /**
-     * 建造形狀實例。
+     * Builds the shape instance.
      *
-     * @return 建造的形狀
+     * @return the built shape
      */
     T build();
 }

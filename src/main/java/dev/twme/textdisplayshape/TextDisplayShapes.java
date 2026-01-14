@@ -4,17 +4,17 @@ import dev.twme.textdisplayshape.bukkit.BukkitShapeFactory;
 import dev.twme.textdisplayshape.packet.PacketShapeFactory;
 
 /**
- * TextDisplayShapes 函式庫的主要入口點。
- * 提供兩種方式來顯示幾何形狀：
+ * Main entry point for the TextDisplayShapes library.
+ * Provides two ways to display geometric shapes:
  * <ul>
- * <li>{@link #bukkit()} - 使用 Bukkit API 直接操作實體</li>
- * <li>{@link #packet()} - 使用 EntityLib 封包方式顯示</li>
+ * <li>{@link #bukkit()} - Uses Bukkit API to directly manipulate entities</li>
+ * <li>{@link #packet()} - Uses EntityLib to display shapes via packets</li>
  * </ul>
  *
- * <h2>使用範例 (Bukkit)</h2>
+ * <h2>Usage Example (Bukkit)</h2>
  * 
  * <pre>{@code
- * // 創建三角形
+ * // Create a triangle
  * Shape triangle = TextDisplayShapes.bukkit()
  *         .triangle(playerLocation, p1, p2, p3)
  *         .color(Color.fromARGB(150, 50, 100, 100))
@@ -22,27 +22,27 @@ import dev.twme.textdisplayshape.packet.PacketShapeFactory;
  *         .build();
  * triangle.spawn();
  *
- * // 移除三角形
+ * // Remove the triangle
  * triangle.remove();
  * }</pre>
  *
- * <h2>使用範例 (Packet/EntityLib)</h2>
+ * <h2>Usage Example (Packet/EntityLib)</h2>
  * 
  * <pre>{@code
- * // 需要先初始化 EntityLib
+ * // EntityLib must be initialized first
  * // EntityLib.init(platform, settings);
  *
- * // 創建線條
+ * // Create a line
  * Shape line = TextDisplayShapes.packet()
  *         .line(playerLocation, p1, p2, 0.1f)
  *         .color(Color.RED)
  *         .build();
  *
- * // 添加觀察者
+ * // Add viewer
  * line.addViewer(player);
  * line.spawn();
  *
- * // 移除線條
+ * // Remove the line
  * line.remove();
  * }</pre>
  */
@@ -52,27 +52,29 @@ public final class TextDisplayShapes {
     private static final PacketShapeFactory PACKET_FACTORY = new PacketShapeFactory();
 
     private TextDisplayShapes() {
-        // 工具類別，禁止實例化
+        // Utility class, prevent instantiation
     }
 
     /**
-     * 獲取 Bukkit 形狀工廠。
-     * 使用此工廠創建的形狀會直接在伺服器端創建 TextDisplay 實體，
-     * 所有玩家都可以看到。
+     * Gets the Bukkit shape factory.
+     * Shapes created with this factory will directly create TextDisplay entities on
+     * the server,
+     * visible to all players.
      *
-     * @return Bukkit 形狀工廠
+     * @return the Bukkit shape factory
      */
     public static BukkitShapeFactory bukkit() {
         return BUKKIT_FACTORY;
     }
 
     /**
-     * 獲取封包形狀工廠。
-     * 使用此工廠創建的形狀只會透過封包發送給指定的觀察者，
-     * 伺服器端不會創建實際實體。
+     * Gets the packet shape factory.
+     * Shapes created with this factory will only be sent via packets to specified
+     * viewers,
+     * no actual entities are created on the server.
      *
      * <p>
-     * <strong>注意：</strong>使用前需要先初始化 EntityLib：
+     * <strong>Note:</strong> EntityLib must be initialized before use:
      * </p>
      * 
      * <pre>{@code
@@ -83,7 +85,7 @@ public final class TextDisplayShapes {
      * EntityLib.init(platform, settings);
      * }</pre>
      *
-     * @return 封包形狀工廠
+     * @return the packet shape factory
      */
     public static PacketShapeFactory packet() {
         return PACKET_FACTORY;

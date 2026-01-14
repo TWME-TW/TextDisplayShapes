@@ -7,54 +7,55 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 所有形狀的基礎介面。
- * 定義了形狀的生命週期管理和觀察者管理方法。
+ * Base interface for all shapes.
+ * Defines lifecycle management and viewer management methods.
  */
 public interface Shape {
 
     /**
-     * 生成形狀到世界中。
+     * Spawns the shape into the world.
      */
     void spawn();
 
     /**
-     * 從世界中移除形狀。
+     * Removes the shape from the world.
      */
     void remove();
 
     /**
-     * 檢查形狀是否已生成。
+     * Checks if the shape has been spawned.
      *
-     * @return 如果已生成則返回 true
+     * @return true if spawned
      */
     boolean isSpawned();
 
     /**
-     * 添加可以看到此形狀的玩家（僅適用於封包模式）。
+     * Adds a player who can see this shape (only applicable in packet mode).
      *
-     * @param player 玩家
+     * @param player the player to add as viewer
      */
     void addViewer(Player player);
 
     /**
-     * 移除可以看到此形狀的玩家（僅適用於封包模式）。
+     * Removes a player from seeing this shape (only applicable in packet mode).
      *
-     * @param player 玩家
+     * @param player the player to remove from viewers
      */
     void removeViewer(Player player);
 
     /**
-     * 獲取所有可以看到此形狀的玩家。
+     * Gets all players who can see this shape.
      *
-     * @return 玩家集合
+     * @return set of viewer players
      */
     Set<Player> getViewers();
 
     /**
-     * 獲取此形狀所有實體的 UUID。
-     * 一個形狀可能由多個 TextDisplay 實體組成（例如三角形由 3 個實體組成）。
+     * Gets the UUIDs of all entities that make up this shape.
+     * A shape may consist of multiple TextDisplay entities (e.g., a triangle
+     * consists of 3 entities).
      *
-     * @return 實體 UUID 列表，如果尚未生成則返回空列表
+     * @return list of entity UUIDs, empty list if not yet spawned
      */
     List<UUID> getEntityUUIDs();
 }

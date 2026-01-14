@@ -22,8 +22,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 使用 EntityLib 封包方式顯示的三角形實作。
- * 只對指定的觀察者玩家發送封包，不會在伺服器端創建實際實體。
+ * Triangle implementation using EntityLib packet-based display.
+ * Only sends packets to specified viewer players, does not create actual
+ * entities on the server.
  */
 public class PacketTriangle implements Shape {
 
@@ -59,13 +60,13 @@ public class PacketTriangle implements Shape {
         if (spawned)
             return;
 
-        // 正面：p1, p2, p3
+        // Front face: p1, p2, p3
         TextDisplayTriangleResult result = TextDisplayUtil.textDisplayTriangle(p1, p2, p3);
         for (Matrix4f matrix : result.transforms) {
             createWrapperEntity(matrix);
         }
 
-        // 背面：交換 p2 和 p3
+        // Back face: swap p2 and p3
         if (doubleSided) {
             TextDisplayTriangleResult backResult = TextDisplayUtil.textDisplayTriangle(p1, p3, p2);
             for (Matrix4f matrix : backResult.transforms) {
@@ -77,7 +78,8 @@ public class PacketTriangle implements Shape {
     }
 
     private void createWrapperEntity(Matrix4f matrix) {
-        // 調整變換矩陣：將絕對座標轉換為相對於生成位置的座標
+        // Adjust transformation matrix: convert absolute coordinates to relative to
+        // spawn location
         Matrix4f adjustedMatrix = new Matrix4f()
                 .translate(
                         (float) -origin.getX(),
@@ -89,21 +91,21 @@ public class PacketTriangle implements Shape {
         entity.spawn(SpigotConversionUtil.fromBukkitLocation(origin));
 
         if (entity.getEntityMeta() instanceof TextDisplayMeta meta) {
-            // 設定 TextDisplay 的屬性
+            // Set TextDisplay properties
             meta.setText(net.kyori.adventure.text.Component.text(" "));
             meta.setBackgroundColor(color.asARGB());
             meta.setSeeThrough(seeThrough);
 
-            // 設定亮度
+            // Set brightness
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 displayMeta.setBrightnessOverride(blockLight << 4 | skyLight << 20);
             }
 
-            // 設定變換矩陣 - 使用 scale, translation, rotation 分開設定
+            // Set transformation matrix using scale, translation, rotation separately
             setTransformFromMatrix(entity, adjustedMatrix);
         }
 
-        // 添加所有觀察者
+        // Add all viewers
         for (UUID uuid : viewerUUIDs) {
             entity.addViewer(uuid);
         }
@@ -112,21 +114,21 @@ public class PacketTriangle implements Shape {
     }
 
     /**
-     * 從 Matrix4f 設定 translation, scale, rotation
+     * Sets translation, scale, and rotation from a Matrix4f.
      */
     private void setTransformFromMatrix(WrapperEntity entity, Matrix4f matrix) {
         if (!(entity.getEntityMeta() instanceof AbstractDisplayMeta meta))
             return;
 
-        // 提取 translation
+        // Extract translation
         Vector3f translation = new Vector3f();
         matrix.getTranslation(translation);
 
-        // 提取 scale
+        // Extract scale
         Vector3f scale = new Vector3f();
         matrix.getScale(scale);
 
-        // 提取 rotation
+        // Extract rotation
         org.joml.Quaternionf rotation = new org.joml.Quaternionf();
         matrix.getUnnormalizedRotation(rotation);
 
@@ -189,16 +191,16 @@ public class PacketTriangle implements Shape {
     }
 
     /**
-     * 獲取此形狀的所有 WrapperEntity 實體。
+     * Gets all WrapperEntity instances of this shape.
      *
-     * @return WrapperEntity 實體列表
+     * @return list of WrapperEntity instances
      */
     public List<WrapperEntity> getEntities() {
         return new ArrayList<>(entities);
     }
 
     /**
-     * 建造者類別。
+     * Builder class.
      */
     public static class Builder implements ShapeBuilder<PacketTriangle> {
         private final Location origin;

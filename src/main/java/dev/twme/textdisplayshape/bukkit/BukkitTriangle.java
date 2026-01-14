@@ -20,7 +20,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 使用 Bukkit API 直接操作 TextDisplay 實體的三角形實作。
+ * Triangle implementation using Bukkit API to directly manipulate TextDisplay
+ * entities.
  */
 public class BukkitTriangle implements Shape {
 
@@ -54,13 +55,13 @@ public class BukkitTriangle implements Shape {
         if (spawned)
             return;
 
-        // 正面：p1, p2, p3
+        // Front face: p1, p2, p3
         TextDisplayTriangleResult result = TextDisplayUtil.textDisplayTriangle(p1, p2, p3);
         for (Matrix4f matrix : result.transforms) {
             spawnTextDisplay(matrix);
         }
 
-        // 背面：交換 p2 和 p3
+        // Back face: swap p2 and p3
         if (doubleSided) {
             TextDisplayTriangleResult backResult = TextDisplayUtil.textDisplayTriangle(p1, p3, p2);
             for (Matrix4f matrix : backResult.transforms) {
@@ -72,7 +73,8 @@ public class BukkitTriangle implements Shape {
     }
 
     private void spawnTextDisplay(Matrix4f matrix) {
-        // 調整變換矩陣：將絕對座標轉換為相對於生成位置的座標
+        // Adjust transformation matrix: convert absolute coordinates to relative to
+        // spawn location
         Matrix4f adjustedMatrix = new Matrix4f()
                 .translate(
                         (float) -origin.getX(),
@@ -108,19 +110,19 @@ public class BukkitTriangle implements Shape {
 
     @Override
     public void addViewer(Player player) {
-        // Bukkit 實作中，所有玩家都可以看到實體
-        // 此方法為封包模式保留
+        // In Bukkit implementation, all players can see the entity
+        // This method is reserved for packet mode
     }
 
     @Override
     public void removeViewer(Player player) {
-        // Bukkit 實作中，無法控制個別玩家的可見性
-        // 此方法為封包模式保留
+        // In Bukkit implementation, cannot control individual player visibility
+        // This method is reserved for packet mode
     }
 
     @Override
     public Set<Player> getViewers() {
-        // 返回空集合，因為 Bukkit 模式對所有玩家可見
+        // Returns empty set since Bukkit mode is visible to all players
         return new HashSet<>();
     }
 
@@ -134,16 +136,16 @@ public class BukkitTriangle implements Shape {
     }
 
     /**
-     * 獲取此形狀的所有 TextDisplay 實體。
+     * Gets all TextDisplay entities of this shape.
      *
-     * @return TextDisplay 實體列表
+     * @return list of TextDisplay entities
      */
     public List<TextDisplay> getEntities() {
         return new ArrayList<>(displays);
     }
 
     /**
-     * 建造者類別。
+     * Builder class.
      */
     public static class Builder implements ShapeBuilder<BukkitTriangle> {
         private final Location origin;

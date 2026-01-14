@@ -19,7 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 使用 Bukkit API 直接操作 TextDisplay 實體的線條實作。
+ * Line implementation using Bukkit API to directly manipulate TextDisplay
+ * entities.
  */
 public class BukkitLine implements Shape {
 
@@ -53,11 +54,11 @@ public class BukkitLine implements Shape {
         if (spawned)
             return;
 
-        // 正面：p1 -> p2
+        // Front face: p1 -> p2
         Matrix4f matrix = TextDisplayUtil.textDisplayLine(p1, p2, thickness);
         spawnTextDisplay(matrix);
 
-        // 背面：交換 p1 和 p2
+        // Back face: swap p1 and p2
         if (doubleSided) {
             Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness);
             spawnTextDisplay(backMatrix);
@@ -67,7 +68,8 @@ public class BukkitLine implements Shape {
     }
 
     private void spawnTextDisplay(Matrix4f matrix) {
-        // 調整變換矩陣：將絕對座標轉換為相對於生成位置的座標
+        // Adjust transformation matrix: convert absolute coordinates to relative to
+        // spawn location
         Matrix4f adjustedMatrix = new Matrix4f()
                 .translate(
                         (float) -origin.getX(),
@@ -103,12 +105,12 @@ public class BukkitLine implements Shape {
 
     @Override
     public void addViewer(Player player) {
-        // Bukkit 實作中，所有玩家都可以看到實體
+        // In Bukkit implementation, all players can see the entity
     }
 
     @Override
     public void removeViewer(Player player) {
-        // Bukkit 實作中，無法控制個別玩家的可見性
+        // In Bukkit implementation, cannot control individual player visibility
     }
 
     @Override
@@ -126,16 +128,16 @@ public class BukkitLine implements Shape {
     }
 
     /**
-     * 獲取此形狀的所有 TextDisplay 實體。
+     * Gets all TextDisplay entities of this shape.
      *
-     * @return TextDisplay 實體列表
+     * @return list of TextDisplay entities
      */
     public List<TextDisplay> getEntities() {
         return new ArrayList<>(displays);
     }
 
     /**
-     * 建造者類別。
+     * Builder class.
      */
     public static class Builder implements ShapeBuilder<BukkitLine> {
         private final Location origin;

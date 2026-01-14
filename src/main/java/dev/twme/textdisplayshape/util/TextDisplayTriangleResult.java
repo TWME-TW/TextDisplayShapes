@@ -7,7 +7,8 @@ import org.joml.Vector3f;
 import java.util.List;
 
 /**
- * 用於儲存 textDisplayTriangle 方法計算結果的數據類別。
+ * Data class for storing the calculation results of the textDisplayTriangle
+ * method.
  */
 public class TextDisplayTriangleResult {
     public final List<Matrix4f> transforms;
