@@ -1,0 +1,5 @@
+name: TextDisplayShapes
+version: '1.0.0'
+main: dev.twme.textdisplayshape.TextDisplayShape
+api-version: '1.21'
+authors: [ TWME-TW ]
