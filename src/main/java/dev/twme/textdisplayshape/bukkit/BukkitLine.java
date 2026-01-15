@@ -60,9 +60,9 @@ public class BukkitLine implements Shape {
         Matrix4f matrix = TextDisplayUtil.textDisplayLine(p1, p2, thickness, roll);
         spawnTextDisplay(matrix);
 
-        // Back face: swap p1 and p2, and add PI to roll for opposite direction
+        // Back face: swap p1 and p2, and invert roll
         if (doubleSided) {
-            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness, roll + (float) Math.PI);
+            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness, -roll);
             spawnTextDisplay(backMatrix);
         }
 

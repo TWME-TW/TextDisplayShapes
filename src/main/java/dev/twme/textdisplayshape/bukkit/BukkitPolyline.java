@@ -85,7 +85,7 @@ public class BukkitPolyline implements Shape {
 
         // Back face
         if (doubleSided) {
-            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness, roll + (float) Math.PI);
+            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness, -roll);
             spawnTextDisplay(backMatrix);
         }
     }
