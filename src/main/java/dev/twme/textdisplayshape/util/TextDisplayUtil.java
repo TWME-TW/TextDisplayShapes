@@ -198,4 +198,137 @@ public class TextDisplayUtil {
 
         return transform.mul(getTextDisplayUnitSquare());
     }
+
+    /**
+     * Decomposes a Matrix4f into the format used by Minecraft's Display Entity:
+     * leftRotation * scale * rightRotation + translation.
+     * This uses polar decomposition to properly handle matrices with shear.
+     *
+     * @param matrix the transformation matrix to decompose
+     * @return a TRSResult containing translation, scale, leftRotation, and
+     *         rightRotation
+     */
+    public static TRSResult decompose(Matrix4f matrix) {
+        // Extract translation from the 4th column
+        Vector3f translation = new Vector3f();
+        matrix.getTranslation(translation);
+
+        // Extract the 3x3 upper-left portion (rotation + scale + shear)
+        org.joml.Matrix3f upper3x3 = new org.joml.Matrix3f();
+        matrix.get3x3(upper3x3);
+
+        // Perform polar decomposition: M = Q * S where Q is orthogonal (rotation) and S
+        // is symmetric
+        // We use an iterative method to find Q
+        org.joml.Matrix3f Q = new org.joml.Matrix3f(upper3x3);
+        // Iterations count: 10 is usually sufficient for high precision
+        for (int i = 0; i < 10; i++) {
+            // Q_next = 0.5 * (Q + Q^-T)
+            org.joml.Matrix3f Qinv = new org.joml.Matrix3f(Q).invert();
+            if (Float.isNaN(Qinv.m00))
+                break; // Handle singular matrix
+            org.joml.Matrix3f QinvT = new org.joml.Matrix3f(Qinv).transpose();
+            Q.add(QinvT).scale(0.5f);
+        }
+
+        // S = Q^T * M (the symmetric part containing scale and shear)
+        org.joml.Matrix3f S = new org.joml.Matrix3f(Q).transpose().mul(upper3x3);
+
+        // We need to diagonalize S to find scale (eigenvalues) and rightRotation
+        // (eigenvectors).
+        // Since S is symmetric, S = V * D * V^T, where V is orthogonal.
+        // The decomposition we want is M = L * Sc * R
+        // M = Q * S = Q * (V * D * V^T) = (Q * V) * D * V^T
+        // So:
+        // Scale = D (diagonal elements)
+        // LeftRotation = Q * V
+        // RightRotation = V^T
+
+        // Diagonalize S using Jacobi method (simplified 3x3 implementation or use
+        // library if available)
+
+        // Initialize V as identity
+        org.joml.Matrix3f V = new org.joml.Matrix3f(); // Eigenvectors
+        V.identity();
+
+        // Jacobi Iteration
+        org.joml.Matrix3f A = new org.joml.Matrix3f(S);
+        int maxIter = 20;
+        for (int iter = 0; iter < maxIter; iter++) {
+            // Find pivot (largest off-diagonal element)
+            float max = 0.0f;
+            int p = 0, q = 1;
+            for (int i = 0; i < 3; i++) {
+                for (int j = i + 1; j < 3; j++) {
+                    float val = Math.abs(A.getRowColumn(i, j));
+                    if (val > max) {
+                        max = val;
+                        p = i;
+                        q = j;
+                    }
+                }
+            }
+
+            if (max < 1e-6f)
+                break; // Converged
+
+            // Compute rotation
+            float app = A.getRowColumn(p, p);
+            float aqq = A.getRowColumn(q, q);
+            float apq = A.getRowColumn(p, q);
+            float phi = 0.5f * (float) Math.atan2(2.0f * apq, aqq - app);
+            float c = (float) Math.cos(phi);
+            float s = (float) Math.sin(phi);
+
+            // Rotation matrix J
+            org.joml.Matrix3f J = new org.joml.Matrix3f();
+            J.setRowColumn(p, p, c);
+            J.setRowColumn(q, q, c);
+            J.setRowColumn(p, q, s);
+            J.setRowColumn(q, p, -s);
+
+            org.joml.Matrix3f JT = new org.joml.Matrix3f(J).transpose();
+            A = JT.mul(A).mul(J);
+            V.mul(J);
+        }
+
+        // Now D is diagonal of A
+        Vector3f D = new Vector3f(A.m00, A.m11, A.m22);
+
+        // Fix negative scales (flip scale and eigenvector)
+        if (D.x < 0) {
+            D.x = -D.x;
+            negateColumn(V, 0);
+        }
+        if (D.y < 0) {
+            D.y = -D.y;
+            negateColumn(V, 1);
+        }
+        if (D.z < 0) {
+            D.z = -D.z;
+            negateColumn(V, 2);
+        }
+
+        // Calculate components
+        Vector3f scale = new Vector3f(D);
+
+        // Left Rotation = Q * V
+        org.joml.Matrix3f leftRotMat = new org.joml.Matrix3f(Q).mul(V);
+        Quaternionf leftRotation = new Quaternionf().setFromNormalized(leftRotMat);
+        leftRotation.normalize();
+
+        // Right Rotation = V^T
+        org.joml.Matrix3f rightRotMat = new org.joml.Matrix3f(V).transpose();
+        Quaternionf rightRotation = new Quaternionf().setFromNormalized(rightRotMat);
+        rightRotation.normalize();
+
+        return new TRSResult(translation, leftRotation, scale, rightRotation);
+    }
+
+    private static void negateColumn(org.joml.Matrix3f m, int col) {
+        float x = m.getRowColumn(0, col);
+        float y = m.getRowColumn(1, col);
+        float z = m.getRowColumn(2, col);
+        m.setColumn(col, -x, -y, -z);
+    }
 }

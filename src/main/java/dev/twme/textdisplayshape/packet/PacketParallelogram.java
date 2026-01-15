@@ -111,28 +111,24 @@ public class PacketParallelogram implements Shape {
     /**
      * Sets translation, scale, and rotation from a Matrix4f.
      */
+    /**
+     * Sets translation, scale, and rotation from a Matrix4f.
+     */
     private void setTransformFromMatrix(WrapperEntity entity, Matrix4f matrix) {
         if (!(entity.getEntityMeta() instanceof AbstractDisplayMeta meta))
             return;
 
-        // Extract translation
-        Vector3f translation = new Vector3f();
-        matrix.getTranslation(translation);
-
-        // Extract scale
-        Vector3f scale = new Vector3f();
-        matrix.getScale(scale);
-
-        // Extract rotation
-        org.joml.Quaternionf rotation = new org.joml.Quaternionf();
-        matrix.getUnnormalizedRotation(rotation);
+        dev.twme.textdisplayshape.util.TRSResult result = TextDisplayUtil.decompose(matrix);
 
         meta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
-                translation.x, translation.y, translation.z));
+                result.translation().x, result.translation().y, result.translation().z));
         meta.setScale(new com.github.retrooper.packetevents.util.Vector3f(
-                scale.x, scale.y, scale.z));
+                result.scale().x, result.scale().y, result.scale().z));
         meta.setLeftRotation(new com.github.retrooper.packetevents.util.Quaternion4f(
-                rotation.x, rotation.y, rotation.z, rotation.w));
+                result.leftRotation().x, result.leftRotation().y, result.leftRotation().z, result.leftRotation().w));
+        meta.setRightRotation(new com.github.retrooper.packetevents.util.Quaternion4f(
+                result.rightRotation().x, result.rightRotation().y, result.rightRotation().z,
+                result.rightRotation().w));
     }
 
     @Override
