@@ -40,7 +40,7 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
 ```java
 // Triangle
 Shape triangle = TextDisplayShapes.bukkit()
-    .triangle(playerLocation, p1, p2, p3)
+    .triangle(spawnLocation, p1, p2, p3)
     .color(Color.fromARGB(150, 50, 100, 100))
     .doubleSided(true)
     .build();
@@ -48,7 +48,7 @@ triangle.spawn();
 
 // Line
 Shape line = TextDisplayShapes.bukkit()
-    .line(playerLocation, p1, p2, 0.1f)
+    .line(spawnLocation, p1, p2, 0.1f)
     .rollDegrees(90f)  // Rotate for visibility from different angles
     .doubleSided(true)
     .build();
@@ -62,14 +62,14 @@ List<Vector3f> points = Arrays.asList(
     new Vector3f(0, 5, 0)
 );
 Shape polyline = TextDisplayShapes.bukkit()
-    .polyline(playerLocation, points, 0.1f)
+    .polyline(spawnLocation, points, 0.1f)
     .closed(true)  // Connect last point to first
     .build();
 polyline.spawn();
 
 // Parallelogram
 Shape parallelogram = TextDisplayShapes.bukkit()
-    .parallelogram(playerLocation, p1, p2, p3)
+    .parallelogram(spawnLocation, p1, p2, p3)
     .build();
 parallelogram.spawn();
 
@@ -91,7 +91,7 @@ EntityLib.init(platform, settings);
 
 // Create shape
 Shape line = TextDisplayShapes.packet()
-    .line(playerLocation, p1, p2, 0.1f)
+    .line(spawnLocation, p1, p2, 0.1f)
     .color(Color.RED)
     .build();
 
