@@ -3,6 +3,8 @@ package dev.twme.textdisplayshape.packet;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
+import java.util.List;
+
 /**
  * Factory class for packet-based shapes.
  * Uses EntityLib packet-based approach to display shapes. EntityLib must be
@@ -34,6 +36,19 @@ public class PacketShapeFactory {
      */
     public PacketLine.Builder line(Location origin, Vector3f p1, Vector3f p2, float thickness) {
         return new PacketLine.Builder(origin, p1, p2, thickness);
+    }
+
+    /**
+     * Creates a polyline (connected line segments) builder.
+     *
+     * @param origin    the spawn location (usually the player's location)
+     * @param points    the list of points defining the polyline (at least 2
+     *                  required)
+     * @param thickness the line thickness
+     * @return the polyline builder
+     */
+    public PacketPolyline.Builder polyline(Location origin, List<Vector3f> points, float thickness) {
+        return new PacketPolyline.Builder(origin, points, thickness);
     }
 
     /**

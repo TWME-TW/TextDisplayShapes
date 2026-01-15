@@ -3,6 +3,8 @@ package dev.twme.textdisplayshape.bukkit;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
+import java.util.List;
+
 /**
  * Factory class for Bukkit-based shapes.
  * Uses direct entity manipulation to display shapes.
@@ -33,6 +35,19 @@ public class BukkitShapeFactory {
      */
     public BukkitLine.Builder line(Location origin, Vector3f p1, Vector3f p2, float thickness) {
         return new BukkitLine.Builder(origin, p1, p2, thickness);
+    }
+
+    /**
+     * Creates a polyline (connected line segments) builder.
+     *
+     * @param origin    the spawn location (usually the player's location)
+     * @param points    the list of points defining the polyline (at least 2
+     *                  required)
+     * @param thickness the line thickness
+     * @return the polyline builder
+     */
+    public BukkitPolyline.Builder polyline(Location origin, List<Vector3f> points, float thickness) {
+        return new BukkitPolyline.Builder(origin, points, thickness);
     }
 
     /**
