@@ -33,6 +33,8 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
 
 ## Usage
 
+> **Note**: When providing a `Location` as the origin, please avoid including the pitch and yaw (set them to 0). Passing a location with rotation data (e.g., `player.getLocation()`) may cause unexpected behavior in shape orientation.
+
 ### Bukkit Mode (Direct Entity)
 
 ```java
