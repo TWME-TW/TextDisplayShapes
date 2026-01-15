@@ -27,7 +27,7 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>TextDisplayShape</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.6</version>
 </dependency>
 ```
 
@@ -131,6 +131,10 @@ line.remove();
 | `.rollDegrees(float)` | Line roll angle in degrees |
 | `.closed(boolean)` | Close polyline (connect last to first) |
 
+## JavaDoc
+
+You can find the JavaDoc [here](https://repo.twme.dev/javadoc/snapshots/dev/twme/TextDisplayShape/1.0.6).
+
 ## Dependencies
 
 - Spigot/Paper 1.21+
@@ -139,4 +143,4 @@ line.remove();
 
 ## License
 
-MIT License
+Apache License Version 2.0
