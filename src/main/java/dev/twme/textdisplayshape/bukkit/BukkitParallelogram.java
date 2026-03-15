@@ -1,22 +1,24 @@
 package dev.twme.textdisplayshape.bukkit;
 
-import dev.twme.textdisplayshape.shape.Shape;
-import dev.twme.textdisplayshape.shape.ShapeBuilder;
-import dev.twme.textdisplayshape.util.TextDisplayUtil;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.entity.Display;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.TextDisplay;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
+import org.bukkit.util.Transformation;
+import org.joml.Vector3f;
+
+import dev.twme.textdisplayshape.shape.Shape;
+import dev.twme.textdisplayshape.shape.ShapeBuilder;
+import dev.twme.textdisplayshape.util.TRSResult;
+import dev.twme.textdisplayshape.util.TextDisplayUtil;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 /**
  * Parallelogram implementation using Bukkit API to directly manipulate
@@ -54,34 +56,35 @@ public class BukkitParallelogram implements Shape {
         if (spawned)
             return;
 
-        // Front face: p1, p2, p3
-        Matrix4f matrix = TextDisplayUtil.textDisplayParallelogram(p1, p2, p3);
-        spawnTextDisplay(matrix);
+        // Front face: p1, p2, p3 — use analytical TRS for precision
+        TRSResult frontTRS = TextDisplayUtil.computeParallelogramTRS(p1, p2, p3);
+        spawnTextDisplay(frontTRS);
 
         // Back face: swap p2 and p3
         if (doubleSided) {
-            Matrix4f backMatrix = TextDisplayUtil.textDisplayParallelogram(p1, p3, p2);
-            spawnTextDisplay(backMatrix);
+            TRSResult backTRS = TextDisplayUtil.computeParallelogramTRS(p1, p3, p2);
+            spawnTextDisplay(backTRS);
         }
 
         spawned = true;
     }
 
-    private void spawnTextDisplay(Matrix4f matrix) {
-        // Adjust transformation matrix: convert absolute coordinates to relative to
-        // spawn location
-        Matrix4f adjustedMatrix = new Matrix4f()
-                .translate(
-                        (float) -origin.getX(),
-                        (float) -origin.getY(),
-                        (float) -origin.getZ())
-                .mul(matrix);
+    private void spawnTextDisplay(TRSResult trs) {
+        // Adjust translation: convert from absolute world coordinates to relative to spawn location
+        Vector3f adjustedTranslation = new Vector3f(trs.translation())
+                .sub((float) origin.getX(), (float) origin.getY(), (float) origin.getZ());
+
+        Transformation transformation = new Transformation(
+                adjustedTranslation,
+                trs.leftRotation(),
+                trs.scale(),
+                trs.rightRotation());
 
         TextDisplay display = origin.getWorld().spawn(origin, TextDisplay.class, (d) -> {
             d.text(MiniMessage.miniMessage().deserialize(" "));
             d.setBackgroundColor(color);
             d.setBrightness(new Display.Brightness(blockLight, skyLight));
-            d.setTransformationMatrix(adjustedMatrix);
+            d.setTransformation(transformation);
             d.setSeeThrough(seeThrough);
         });
         displays.add(display);

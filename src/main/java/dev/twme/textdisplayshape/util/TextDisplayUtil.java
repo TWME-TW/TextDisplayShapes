@@ -1,5 +1,6 @@
 package dev.twme.textdisplayshape.util;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -197,6 +198,184 @@ public class TextDisplayUtil {
         transform = shear(transform, shear, 0.0F);
 
         return transform.mul(getTextDisplayUnitSquare());
+    }
+
+    /**
+     * Private helper: computes TRS decomposition from a 2x2 inner matrix and 2D translation,
+     * combined with world rotation and origin, using analytical 2x2 SVD.
+     */
+    private static TRSResult computeTRSFromInner2D(
+            double m00, double m01, double m10, double m11,
+            double tx, double ty,
+            Quaternionf rotation, Vector3f worldOrigin) {
+
+        // World translation = origin + rotation * (tx, ty, 0)
+        Vector3f innerTranslation = new Vector3f((float) tx, (float) ty, 0f);
+        Vector3f worldTranslation = new Vector3f();
+        rotation.transform(innerTranslation, worldTranslation);
+        worldTranslation.add(worldOrigin);
+
+        // Check if matrix is already diagonal (no off-diagonal terms)
+        if (Math.abs(m01) < 1e-6 && Math.abs(m10) < 1e-6) {
+            return new TRSResult(worldTranslation, new Quaternionf(rotation),
+                    new Vector3f((float) m00, (float) m11, 1f), new Quaternionf());
+        }
+
+        // Analytical 2x2 SVD: M = U * Sigma * V^T
+        double ata00 = m00 * m00 + m10 * m10;
+        double ata01 = m00 * m01 + m10 * m11;
+        double ata11 = m01 * m01 + m11 * m11;
+
+        double traceATA = ata00 + ata11;
+        double detM = m00 * m11 - m01 * m10;
+        double detATA = detM * detM;
+        double disc = Math.sqrt(Math.max(0, traceATA * traceATA - 4.0 * detATA));
+
+        double sigma1 = Math.sqrt(Math.max(0, (traceATA + disc) * 0.5));
+        double sigma2 = Math.sqrt(Math.max(0, (traceATA - disc) * 0.5));
+
+        // V rotation angle (diagonalizes A^T * A)
+        double theta = 0.5 * Math.atan2(2.0 * ata01, ata00 - ata11);
+        double cosV = Math.cos(theta);
+        double sinV = Math.sin(theta);
+
+        // U = M * V * Sigma^{-1}
+        double u00, u10, u01, u11;
+        if (sigma1 > 1e-10) {
+            u00 = (m00 * cosV + m01 * sinV) / sigma1;
+            u10 = (m10 * cosV + m11 * sinV) / sigma1;
+        } else {
+            u00 = 1; u10 = 0;
+        }
+        if (sigma2 > 1e-10) {
+            u01 = (-m00 * sinV + m01 * cosV) / sigma2;
+            u11 = (-m10 * sinV + m11 * cosV) / sigma2;
+        } else {
+            u01 = 0; u11 = 1;
+        }
+
+        // Ensure U is a proper rotation (det = +1)
+        double detU = u00 * u11 - u01 * u10;
+        float finalSigma2 = (float) sigma2;
+        if (detU < 0) {
+            u01 = -u01;
+            u11 = -u11;
+            finalSigma2 = (float) -sigma2;
+        }
+
+        // leftRotation = worldRotation * U_3x3
+        org.joml.Matrix3f uMat = new org.joml.Matrix3f(
+                (float) u00, (float) u10, 0,
+                (float) u01, (float) u11, 0,
+                0, 0, 1);
+        Quaternionf uQuat = new Quaternionf().setFromNormalized(uMat).normalize();
+        Quaternionf leftRotation = new Quaternionf(rotation).mul(uQuat).normalize();
+
+        // rightRotation = V^T_3x3
+        org.joml.Matrix3f vtMat = new org.joml.Matrix3f(
+                (float) cosV, (float) -sinV, 0,
+                (float) sinV, (float) cosV, 0,
+                0, 0, 1);
+        Quaternionf rightRotation = new Quaternionf().setFromNormalized(vtMat).normalize();
+
+        Vector3f scale = new Vector3f((float) sigma1, finalSigma2, 1f);
+        return new TRSResult(worldTranslation, leftRotation, scale, rightRotation);
+    }
+
+    /**
+     * Computes the TRS (Translation, Left/RightRotation, Scale) decomposition
+     * for a parallelogram analytically, without iterative numerical decomposition.
+     * This produces more accurate results than the general-purpose decompose() method.
+     *
+     * @param point1 the starting point (one corner)
+     * @param point2 the second point (defines the first edge, width direction)
+     * @param point3 the third point (defines the second edge, height direction)
+     * @return TRS result with translation in absolute world coordinates
+     */
+    public static TRSResult computeParallelogramTRS(Vector3f point1, Vector3f point2, Vector3f point3) {
+        Vector3f p2vec = new Vector3f(point2).sub(point1);
+        Vector3f p3vec = new Vector3f(point3).sub(point1);
+
+        if (new Vector3f(p2vec).cross(p3vec).lengthSquared() < 1.0E-4F) {
+            p3vec.add(0.0001f, 0.0001f, 0.0001f);
+        }
+
+        Vector3f zAxis = new Vector3f(p2vec).cross(p3vec).normalize();
+        Vector3f xAxis = new Vector3f(p2vec).normalize();
+        Vector3f yAxis = new Vector3f(zAxis).cross(xAxis).normalize();
+
+        float width = p2vec.length();
+        float height = p3vec.dot(yAxis);
+        float p3Width = p3vec.dot(xAxis);
+
+        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        float shear = (width > 0.001f) ? p3Width / width : 0.0f;
+
+        // Inner 2x2 = scale(w,h) * shear(s,0) * unitSquare
+        // = [[w, ws], [0, h]] * [[8, 0], [0, 4]] = [[8w, 4ws], [0, 4h]]
+        double w = width;
+        double h = height;
+        double s = shear;
+        return computeTRSFromInner2D(
+                8.0 * w, 4.0 * w * s, 0, 4.0 * h,
+                0.4 * w, 0,
+                rotation, point1);
+    }
+
+    /**
+     * Computes the TRS (Translation, Left/RightRotation, Scale) decomposition
+     * for a triangle analytically, without iterative numerical decomposition.
+     * Returns 3 TRSResults, one for each sub-piece of the triangle.
+     *
+     * @param point1 the first vertex
+     * @param point2 the second vertex
+     * @param point3 the third vertex
+     * @return list of 3 TRS results with translation in absolute world coordinates
+     */
+    public static List<TRSResult> computeTriangleTRS(Vector3f point1, Vector3f point2, Vector3f point3) {
+        Vector3f p2vec = new Vector3f(point2).sub(point1);
+        Vector3f p3vec = new Vector3f(point3).sub(point1);
+
+        if (new Vector3f(p2vec).cross(p3vec).lengthSquared() < 1.0E-4F) {
+            p3vec.add(0.0001f, 0.0001f, 0.0001f);
+        }
+
+        Vector3f zAxis = new Vector3f(p2vec).cross(p3vec).normalize();
+        Vector3f xAxis = new Vector3f(p2vec).normalize();
+        Vector3f yAxis = new Vector3f(zAxis).cross(xAxis).normalize();
+
+        float width = p2vec.length();
+        float height = p3vec.dot(yAxis);
+        float p3Width = p3vec.dot(xAxis);
+
+        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        float shear = (width > 0.001f) ? p3Width / width : 0.0f;
+
+        double w = width;
+        double h = height;
+        double s = shear;
+
+        List<TRSResult> results = new ArrayList<>(3);
+
+        // Piece 0 (bottom-left quarter): linear = [[4w, 2ws], [0, 2h]], translation = (0.2w, 0)
+        results.add(computeTRSFromInner2D(
+                4.0 * w, 2.0 * w * s, 0, 2.0 * h,
+                0.2 * w, 0,
+                rotation, point1));
+
+        // Piece 1 (top-right, y-shear): linear = [[4w, 2w(s-1)], [0, 2h]], translation = (0.7w, 0)
+        results.add(computeTRSFromInner2D(
+                4.0 * w, 2.0 * w * (s - 1.0), 0, 2.0 * h,
+                0.7 * w, 0,
+                rotation, point1));
+
+        // Piece 2 (bottom-right, x-shear): linear = [[4w-4ws, 2ws], [-4h, 2h]], translation = (0.2w+0.3ws, 0.3h)
+        results.add(computeTRSFromInner2D(
+                4.0 * w - 4.0 * w * s, 2.0 * w * s, -4.0 * h, 2.0 * h,
+                0.2 * w + 0.3 * w * s, 0.3 * h,
+                rotation, point1));
+
+        return results;
     }
 
     /**

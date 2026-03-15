@@ -1,25 +1,26 @@
 package dev.twme.textdisplayshape.packet;
 
-import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
-import dev.twme.textdisplayshape.shape.Shape;
-import dev.twme.textdisplayshape.shape.ShapeBuilder;
-import dev.twme.textdisplayshape.util.TextDisplayTriangleResult;
-import dev.twme.textdisplayshape.util.TextDisplayUtil;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
-import me.tofaa.entitylib.meta.display.TextDisplayMeta;
-import me.tofaa.entitylib.wrapper.WrapperEntity;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.joml.Vector3f;
+
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+
+import dev.twme.textdisplayshape.shape.Shape;
+import dev.twme.textdisplayshape.shape.ShapeBuilder;
+import dev.twme.textdisplayshape.util.TRSResult;
+import dev.twme.textdisplayshape.util.TextDisplayUtil;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
+import me.tofaa.entitylib.meta.display.TextDisplayMeta;
+import me.tofaa.entitylib.wrapper.WrapperEntity;
 
 /**
  * Triangle implementation using EntityLib packet-based display.
@@ -60,32 +61,25 @@ public class PacketTriangle implements Shape {
         if (spawned)
             return;
 
-        // Front face: p1, p2, p3
-        TextDisplayTriangleResult result = TextDisplayUtil.textDisplayTriangle(p1, p2, p3);
-        for (Matrix4f matrix : result.transforms) {
-            createWrapperEntity(matrix);
+        // Front face: p1, p2, p3 — use analytical TRS for precision
+        for (TRSResult trs : TextDisplayUtil.computeTriangleTRS(p1, p2, p3)) {
+            createWrapperEntityFromTRS(trs);
         }
 
         // Back face: swap p2 and p3
         if (doubleSided) {
-            TextDisplayTriangleResult backResult = TextDisplayUtil.textDisplayTriangle(p1, p3, p2);
-            for (Matrix4f matrix : backResult.transforms) {
-                createWrapperEntity(matrix);
+            for (TRSResult trs : TextDisplayUtil.computeTriangleTRS(p1, p3, p2)) {
+                createWrapperEntityFromTRS(trs);
             }
         }
 
         spawned = true;
     }
 
-    private void createWrapperEntity(Matrix4f matrix) {
-        // Adjust transformation matrix: convert absolute coordinates to relative to
-        // spawn location
-        Matrix4f adjustedMatrix = new Matrix4f()
-                .translate(
-                        (float) -origin.getX(),
-                        (float) -origin.getY(),
-                        (float) -origin.getZ())
-                .mul(matrix);
+    private void createWrapperEntityFromTRS(TRSResult trs) {
+        // Adjust translation: convert from absolute world coordinates to relative to spawn location
+        Vector3f adjustedTranslation = new Vector3f(trs.translation())
+                .sub((float) origin.getX(), (float) origin.getY(), (float) origin.getZ());
 
         WrapperEntity entity = new WrapperEntity(EntityTypes.TEXT_DISPLAY);
         entity.spawn(SpigotConversionUtil.fromBukkitLocation(origin));
@@ -96,13 +90,19 @@ public class PacketTriangle implements Shape {
             meta.setBackgroundColor(color.asARGB());
             meta.setSeeThrough(seeThrough);
 
-            // Set brightness
+            // Set brightness and transformation
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 displayMeta.setBrightnessOverride(blockLight << 4 | skyLight << 20);
+                displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
+                        adjustedTranslation.x, adjustedTranslation.y, adjustedTranslation.z));
+                displayMeta.setScale(new com.github.retrooper.packetevents.util.Vector3f(
+                        trs.scale().x, trs.scale().y, trs.scale().z));
+                displayMeta.setLeftRotation(new com.github.retrooper.packetevents.util.Quaternion4f(
+                        trs.leftRotation().x, trs.leftRotation().y, trs.leftRotation().z, trs.leftRotation().w));
+                displayMeta.setRightRotation(new com.github.retrooper.packetevents.util.Quaternion4f(
+                        trs.rightRotation().x, trs.rightRotation().y, trs.rightRotation().z,
+                        trs.rightRotation().w));
             }
-
-            // Set transformation matrix using scale, translation, rotation separately
-            setTransformFromMatrix(entity, adjustedMatrix);
         }
 
         // Add all viewers
@@ -111,29 +111,6 @@ public class PacketTriangle implements Shape {
         }
 
         entities.add(entity);
-    }
-
-    /**
-     * Sets translation, scale, and rotation from a Matrix4f.
-     */
-    /**
-     * Sets translation, scale, and rotation from a Matrix4f.
-     */
-    private void setTransformFromMatrix(WrapperEntity entity, Matrix4f matrix) {
-        if (!(entity.getEntityMeta() instanceof AbstractDisplayMeta meta))
-            return;
-
-        dev.twme.textdisplayshape.util.TRSResult result = TextDisplayUtil.decompose(matrix);
-
-        meta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
-                result.translation().x, result.translation().y, result.translation().z));
-        meta.setScale(new com.github.retrooper.packetevents.util.Vector3f(
-                result.scale().x, result.scale().y, result.scale().z));
-        meta.setLeftRotation(new com.github.retrooper.packetevents.util.Quaternion4f(
-                result.leftRotation().x, result.leftRotation().y, result.leftRotation().z, result.leftRotation().w));
-        meta.setRightRotation(new com.github.retrooper.packetevents.util.Quaternion4f(
-                result.rightRotation().x, result.rightRotation().y, result.rightRotation().z,
-                result.rightRotation().w));
     }
 
     @Override
