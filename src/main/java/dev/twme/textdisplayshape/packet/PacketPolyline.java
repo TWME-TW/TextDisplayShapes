@@ -36,6 +36,7 @@ public class PacketPolyline implements Shape {
     private final int blockLight;
     private final int skyLight;
     private final boolean seeThrough;
+    private final float viewRange;
 
     private final List<WrapperEntity> entities = new ArrayList<>();
     private final Set<UUID> viewerUUIDs = new HashSet<>();
@@ -53,6 +54,7 @@ public class PacketPolyline implements Shape {
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
+        this.viewRange = builder.viewRange;
     }
 
     @Override
@@ -112,6 +114,7 @@ public class PacketPolyline implements Shape {
 
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 displayMeta.setBrightnessOverride(blockLight << 4 | skyLight << 20);
+                displayMeta.setViewRange(viewRange);
             }
 
             setTransformFromMatrix(entity, adjustedMatrix);
@@ -230,6 +233,7 @@ public class PacketPolyline implements Shape {
         private int blockLight = 15;
         private int skyLight = 15;
         private boolean seeThrough = true;
+        private float viewRange = 1.0f;
 
         public Builder(Location origin, List<Vector3f> points, float thickness) {
             this.origin = origin;
@@ -280,6 +284,12 @@ public class PacketPolyline implements Shape {
         @Override
         public Builder seeThrough(boolean seeThrough) {
             this.seeThrough = seeThrough;
+            return this;
+        }
+
+        @Override
+        public Builder viewRange(float viewRange) {
+            this.viewRange = viewRange;
             return this;
         }
 

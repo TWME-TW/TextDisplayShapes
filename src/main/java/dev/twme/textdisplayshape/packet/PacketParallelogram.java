@@ -38,6 +38,7 @@ public class PacketParallelogram implements Shape {
     private final int blockLight;
     private final int skyLight;
     private final boolean seeThrough;
+    private final float viewRange;
 
     private final List<WrapperEntity> entities = new ArrayList<>();
     private final Set<UUID> viewerUUIDs = new HashSet<>();
@@ -54,6 +55,7 @@ public class PacketParallelogram implements Shape {
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
+        this.viewRange = builder.viewRange;
     }
 
     @Override
@@ -91,6 +93,7 @@ public class PacketParallelogram implements Shape {
             // Set brightness and transformation
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 displayMeta.setBrightnessOverride(blockLight << 4 | skyLight << 20);
+                displayMeta.setViewRange(viewRange);
                 displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
                         adjustedTranslation.x, adjustedTranslation.y, adjustedTranslation.z));
                 displayMeta.setScale(new com.github.retrooper.packetevents.util.Vector3f(
@@ -184,6 +187,7 @@ public class PacketParallelogram implements Shape {
         private int blockLight = 15;
         private int skyLight = 15;
         private boolean seeThrough = true;
+        private float viewRange = 1.0f;
 
         public Builder(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
             this.origin = origin;
@@ -214,6 +218,12 @@ public class PacketParallelogram implements Shape {
         @Override
         public Builder seeThrough(boolean seeThrough) {
             this.seeThrough = seeThrough;
+            return this;
+        }
+
+        @Override
+        public Builder viewRange(float viewRange) {
+            this.viewRange = viewRange;
             return this;
         }
 

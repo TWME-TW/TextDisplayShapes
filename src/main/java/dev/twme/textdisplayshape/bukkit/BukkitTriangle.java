@@ -35,6 +35,7 @@ public class BukkitTriangle implements Shape {
     private final int blockLight;
     private final int skyLight;
     private final boolean seeThrough;
+    private final float viewRange;
 
     private final List<TextDisplay> displays = new ArrayList<>();
     private boolean spawned = false;
@@ -49,6 +50,7 @@ public class BukkitTriangle implements Shape {
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
+        this.viewRange = builder.viewRange;
     }
 
     @Override
@@ -88,6 +90,7 @@ public class BukkitTriangle implements Shape {
             d.setBrightness(new Display.Brightness(blockLight, skyLight));
             d.setTransformation(transformation);
             d.setSeeThrough(seeThrough);
+            d.setViewRange(viewRange);
         });
         displays.add(display);
     }
@@ -158,6 +161,7 @@ public class BukkitTriangle implements Shape {
         private int blockLight = 15;
         private int skyLight = 15;
         private boolean seeThrough = true;
+        private float viewRange = 1.0f;
 
         public Builder(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
             this.origin = origin;
@@ -188,6 +192,12 @@ public class BukkitTriangle implements Shape {
         @Override
         public Builder seeThrough(boolean seeThrough) {
             this.seeThrough = seeThrough;
+            return this;
+        }
+
+        @Override
+        public Builder viewRange(float viewRange) {
+            this.viewRange = viewRange;
             return this;
         }
 

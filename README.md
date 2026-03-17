@@ -9,6 +9,7 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
   - **Bukkit Mode**: Direct entity manipulation, visible to all players
   - **Packet Mode**: EntityLib-based, only visible to specified viewers
 - **Customizable**: Color, brightness, transparency, double-sided rendering
+- **Display Control**: Adjustable view range (`viewRange`)
 - **Line Roll Angle**: Rotate lines around their length axis for visibility from any angle
 
 ## Installation
@@ -50,6 +51,7 @@ triangle.spawn();
 Shape line = TextDisplayShapes.bukkit()
     .line(spawnLocation, p1, p2, 0.1f)
     .rollDegrees(90f)  // Rotate for visibility from different angles
+    .viewRange(1.0f)
     .doubleSided(true)
     .build();
 line.spawn();
@@ -93,6 +95,7 @@ EntityLib.init(platform, settings);
 Shape line = TextDisplayShapes.packet()
     .line(spawnLocation, p1, p2, 0.1f)
     .color(Color.RED)
+    .viewRange(1.0f)
     .build();
 
 // Add viewers (only these players will see the shape)
@@ -129,6 +132,7 @@ line.remove();
 | `.doubleSided(boolean)` | Enable double-sided rendering |
 | `.brightness(int block, int sky)` | Set brightness (0-15) |
 | `.seeThrough(boolean)` | Make visible through blocks |
+| `.viewRange(float)` | Set entity view range |
 | `.roll(float)` | Line roll angle in radians |
 | `.rollDegrees(float)` | Line roll angle in degrees |
 | `.closed(boolean)` | Close polyline (connect last to first) |

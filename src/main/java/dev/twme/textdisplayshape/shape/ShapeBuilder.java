@@ -44,6 +44,14 @@ public interface ShapeBuilder<T extends Shape> {
     ShapeBuilder<T> seeThrough(boolean seeThrough);
 
     /**
+     * Sets the view range of the shape display entities.
+     *
+     * @param viewRange the render view range
+     * @return this builder
+     */
+    ShapeBuilder<T> viewRange(float viewRange);
+
+    /**
      * Builds the shape instance.
      *
      * @return the built shape

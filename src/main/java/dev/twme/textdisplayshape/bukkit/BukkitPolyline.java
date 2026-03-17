@@ -1,9 +1,11 @@
 package dev.twme.textdisplayshape.bukkit;
 
-import dev.twme.textdisplayshape.shape.Shape;
-import dev.twme.textdisplayshape.shape.ShapeBuilder;
-import dev.twme.textdisplayshape.util.TextDisplayUtil;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
@@ -12,11 +14,10 @@ import org.bukkit.entity.TextDisplay;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import dev.twme.textdisplayshape.shape.Shape;
+import dev.twme.textdisplayshape.shape.ShapeBuilder;
+import dev.twme.textdisplayshape.util.TextDisplayUtil;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 /**
  * Polyline (connected line segments) implementation using Bukkit API.
@@ -34,6 +35,7 @@ public class BukkitPolyline implements Shape {
     private final int blockLight;
     private final int skyLight;
     private final boolean seeThrough;
+    private final float viewRange;
 
     private final List<TextDisplay> displays = new ArrayList<>();
     private boolean spawned = false;
@@ -49,6 +51,7 @@ public class BukkitPolyline implements Shape {
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
+        this.viewRange = builder.viewRange;
     }
 
     @Override
@@ -104,6 +107,7 @@ public class BukkitPolyline implements Shape {
             d.setBrightness(new Display.Brightness(blockLight, skyLight));
             d.setTransformationMatrix(adjustedMatrix);
             d.setSeeThrough(seeThrough);
+            d.setViewRange(viewRange);
         });
         displays.add(display);
     }
@@ -183,6 +187,7 @@ public class BukkitPolyline implements Shape {
         private int blockLight = 15;
         private int skyLight = 15;
         private boolean seeThrough = true;
+        private float viewRange = 1.0f;
 
         /**
          * Creates a polyline builder with the given points.
@@ -253,6 +258,12 @@ public class BukkitPolyline implements Shape {
         @Override
         public Builder seeThrough(boolean seeThrough) {
             this.seeThrough = seeThrough;
+            return this;
+        }
+
+        @Override
+        public Builder viewRange(float viewRange) {
+            this.viewRange = viewRange;
             return this;
         }
 

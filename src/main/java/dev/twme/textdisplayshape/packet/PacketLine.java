@@ -1,6 +1,19 @@
 package dev.twme.textdisplayshape.packet;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
 import dev.twme.textdisplayshape.util.TextDisplayUtil;
@@ -8,17 +21,6 @@ import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
 import me.tofaa.entitylib.meta.display.TextDisplayMeta;
 import me.tofaa.entitylib.wrapper.WrapperEntity;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * Line implementation using EntityLib packet-based display.
@@ -37,6 +39,7 @@ public class PacketLine implements Shape {
     private final int blockLight;
     private final int skyLight;
     private final boolean seeThrough;
+    private final float viewRange;
 
     private final List<WrapperEntity> entities = new ArrayList<>();
     private final Set<UUID> viewerUUIDs = new HashSet<>();
@@ -54,6 +57,7 @@ public class PacketLine implements Shape {
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
+        this.viewRange = builder.viewRange;
     }
 
     @Override
@@ -96,6 +100,7 @@ public class PacketLine implements Shape {
             // Set brightness
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 displayMeta.setBrightnessOverride(blockLight << 4 | skyLight << 20);
+                displayMeta.setViewRange(viewRange);
             }
 
             // Set transformation matrix using scale, translation, rotation separately
@@ -211,6 +216,7 @@ public class PacketLine implements Shape {
         private int blockLight = 15;
         private int skyLight = 15;
         private boolean seeThrough = true;
+        private float viewRange = 1.0f;
 
         public Builder(Location origin, Vector3f p1, Vector3f p2, float thickness) {
             this.origin = origin;
@@ -267,6 +273,12 @@ public class PacketLine implements Shape {
         @Override
         public Builder seeThrough(boolean seeThrough) {
             this.seeThrough = seeThrough;
+            return this;
+        }
+
+        @Override
+        public Builder viewRange(float viewRange) {
+            this.viewRange = viewRange;
             return this;
         }
 
