@@ -28,7 +28,7 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>TextDisplayShape</artifactId>
-    <version>1.0.6</version>
+    <version>$version%</version>
 </dependency>
 ```
 
