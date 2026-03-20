@@ -25,7 +25,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
  */
 public class BukkitPolyline implements Shape {
 
-    private final Location origin;
+    private Location origin;
     private final List<Vector3f> points;
     private final float thickness;
     private final float roll;
@@ -159,6 +159,27 @@ public class BukkitPolyline implements Shape {
      */
     public List<TextDisplay> getEntities() {
         return new ArrayList<>(displays);
+    }
+
+    @Override
+    public void teleportOrigin(Location newOrigin) {
+        if (!spawned) return;
+
+        float deltaX = (float) (newOrigin.getX() - origin.getX());
+        float deltaY = (float) (newOrigin.getY() - origin.getY());
+        float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
+
+        for (TextDisplay display : displays) {
+            if (!display.isValid()) continue;
+            org.bukkit.util.Transformation t = display.getTransformation();
+            org.joml.Vector3f tr = t.getTranslation();
+            display.setTransformation(new org.bukkit.util.Transformation(
+                    new org.joml.Vector3f(tr.x - deltaX, tr.y - deltaY, tr.z - deltaZ),
+                    t.getLeftRotation(), t.getScale(), t.getRightRotation()));
+            display.teleport(newOrigin);
+        }
+
+        this.origin = newOrigin.clone();
     }
 
     /**

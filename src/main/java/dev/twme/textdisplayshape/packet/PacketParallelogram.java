@@ -29,7 +29,7 @@ import me.tofaa.entitylib.wrapper.WrapperEntity;
  */
 public class PacketParallelogram implements Shape {
 
-    private final Location origin;
+    private Location origin;
     private final Vector3f p1;
     private final Vector3f p2;
     private final Vector3f p3;
@@ -171,6 +171,31 @@ public class PacketParallelogram implements Shape {
      */
     public List<WrapperEntity> getEntities() {
         return new ArrayList<>(entities);
+    }
+
+    @Override
+    public void teleportOrigin(Location newOrigin) {
+        if (!spawned) return;
+
+        float deltaX = (float) (newOrigin.getX() - origin.getX());
+        float deltaY = (float) (newOrigin.getY() - origin.getY());
+        float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
+
+        com.github.retrooper.packetevents.protocol.world.Location peLoc =
+                SpigotConversionUtil.fromBukkitLocation(newOrigin);
+
+        for (WrapperEntity entity : entities) {
+            if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
+                com.github.retrooper.packetevents.util.Vector3f old = displayMeta.getTranslation();
+                displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
+                        old.getX() - deltaX,
+                        old.getY() - deltaY,
+                        old.getZ() - deltaZ));
+            }
+            entity.teleport(peLoc);
+        }
+
+        this.origin = newOrigin.clone();
     }
 
     /**

@@ -1,6 +1,19 @@
 package dev.twme.textdisplayshape.packet;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
 import dev.twme.textdisplayshape.util.TextDisplayUtil;
@@ -8,17 +21,6 @@ import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import me.tofaa.entitylib.meta.display.AbstractDisplayMeta;
 import me.tofaa.entitylib.meta.display.TextDisplayMeta;
 import me.tofaa.entitylib.wrapper.WrapperEntity;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * Polyline (connected line segments) implementation using EntityLib packets.
@@ -26,7 +28,7 @@ import java.util.UUID;
  */
 public class PacketPolyline implements Shape {
 
-    private final Location origin;
+    private Location origin;
     private final List<Vector3f> points;
     private final float thickness;
     private final float roll;
@@ -205,6 +207,31 @@ public class PacketPolyline implements Shape {
      */
     public List<WrapperEntity> getEntities() {
         return new ArrayList<>(entities);
+    }
+
+    @Override
+    public void teleportOrigin(Location newOrigin) {
+        if (!spawned) return;
+
+        float deltaX = (float) (newOrigin.getX() - origin.getX());
+        float deltaY = (float) (newOrigin.getY() - origin.getY());
+        float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
+
+        com.github.retrooper.packetevents.protocol.world.Location peLoc =
+                SpigotConversionUtil.fromBukkitLocation(newOrigin);
+
+        for (WrapperEntity entity : entities) {
+            if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
+                com.github.retrooper.packetevents.util.Vector3f old = displayMeta.getTranslation();
+                displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
+                        old.getX() - deltaX,
+                        old.getY() - deltaY,
+                        old.getZ() - deltaZ));
+            }
+            entity.teleport(peLoc);
+        }
+
+        this.origin = newOrigin.clone();
     }
 
     /**

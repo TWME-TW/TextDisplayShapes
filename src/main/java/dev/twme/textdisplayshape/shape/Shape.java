@@ -1,10 +1,11 @@
 package dev.twme.textdisplayshape.shape;
 
-import org.bukkit.entity.Player;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 /**
  * Base interface for all shapes.
@@ -58,4 +59,15 @@ public interface Shape {
      * @return list of entity UUIDs, empty list if not yet spawned
      */
     List<UUID> getEntityUUIDs();
+
+    /**
+     * Teleports all entities to a new origin and adjusts their translation offsets
+     * so that the shape remains at the same absolute world position.
+     * <p>
+     * This is useful when the player moves far from the original spawn point,
+     * causing TextDisplay entities to exceed their view range and become invisible.
+     *
+     * @param newOrigin the new origin location to teleport entities to
+     */
+    void teleportOrigin(Location newOrigin);
 }

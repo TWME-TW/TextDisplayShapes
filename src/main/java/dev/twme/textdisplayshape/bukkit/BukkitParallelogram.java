@@ -26,7 +26,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
  */
 public class BukkitParallelogram implements Shape {
 
-    private final Location origin;
+    private Location origin;
     private final Vector3f p1;
     private final Vector3f p2;
     private final Vector3f p3;
@@ -140,6 +140,27 @@ public class BukkitParallelogram implements Shape {
      */
     public List<TextDisplay> getEntities() {
         return new ArrayList<>(displays);
+    }
+
+    @Override
+    public void teleportOrigin(Location newOrigin) {
+        if (!spawned) return;
+
+        float deltaX = (float) (newOrigin.getX() - origin.getX());
+        float deltaY = (float) (newOrigin.getY() - origin.getY());
+        float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
+
+        for (TextDisplay display : displays) {
+            if (!display.isValid()) continue;
+            org.bukkit.util.Transformation t = display.getTransformation();
+            org.joml.Vector3f tr = t.getTranslation();
+            display.setTransformation(new org.bukkit.util.Transformation(
+                    new org.joml.Vector3f(tr.x - deltaX, tr.y - deltaY, tr.z - deltaZ),
+                    t.getLeftRotation(), t.getScale(), t.getRightRotation()));
+            display.teleport(newOrigin);
+        }
+
+        this.origin = newOrigin.clone();
     }
 
     /**
