@@ -52,6 +52,20 @@ public interface ShapeBuilder<T extends Shape> {
     ShapeBuilder<T> viewRange(float viewRange);
 
     /**
+     * Enables or disables packet root-anchor mode.
+     * <p>
+     * Packet builders may use an invisible root entity and attach their display
+     * entities as passengers, allowing the whole shape to move by teleporting a
+     * single anchor. Implementations that do not support this mode may ignore it.
+     *
+     * @param enabled true to enable root-anchor mode
+     * @return this builder
+     */
+    default ShapeBuilder<T> rootAnchor(boolean enabled) {
+        return this;
+    }
+
+    /**
      * Builds the shape instance.
      *
      * @return the built shape

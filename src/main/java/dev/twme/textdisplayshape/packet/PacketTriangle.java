@@ -12,6 +12,8 @@ import org.bukkit.entity.Player;
 import org.joml.Vector3f;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBundle;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
@@ -39,10 +41,12 @@ public class PacketTriangle implements Shape {
     private final int skyLight;
     private final boolean seeThrough;
     private final float viewRange;
+    private final boolean rootAnchorEnabled;
 
     private final List<WrapperEntity> entities = new ArrayList<>();
     private final Set<UUID> viewerUUIDs = new HashSet<>();
     private final Set<Player> viewers = new HashSet<>();
+    private WrapperEntity rootAnchor;
     private boolean spawned = false;
 
     private PacketTriangle(Builder builder) {
@@ -56,12 +60,17 @@ public class PacketTriangle implements Shape {
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
         this.viewRange = builder.viewRange;
+        this.rootAnchorEnabled = builder.rootAnchorEnabled;
     }
 
     @Override
     public void spawn() {
         if (spawned)
             return;
+
+        if (rootAnchorEnabled) {
+            rootAnchor = PacketRootAnchorSupport.createRootAnchor(origin, viewRange, viewerUUIDs);
+        }
 
         // Front face: p1, p2, p3 — use analytical TRS for precision
         for (TRSResult trs : TextDisplayUtil.computeTriangleTRS(p1, p2, p3)) {
@@ -114,6 +123,10 @@ public class PacketTriangle implements Shape {
         }
 
         entities.add(entity);
+
+        if (rootAnchorEnabled) {
+            PacketRootAnchorSupport.attachPassenger(rootAnchor, entity);
+        }
     }
 
     @Override
@@ -122,6 +135,10 @@ public class PacketTriangle implements Shape {
             entity.remove();
         }
         entities.clear();
+        if (rootAnchor != null) {
+            rootAnchor.remove();
+            rootAnchor = null;
+        }
         spawned = false;
     }
 
@@ -135,6 +152,9 @@ public class PacketTriangle implements Shape {
         viewers.add(player);
         viewerUUIDs.add(player.getUniqueId());
         if (spawned) {
+            if (rootAnchor != null) {
+                rootAnchor.addViewer(player.getUniqueId());
+            }
             for (WrapperEntity entity : entities) {
                 entity.addViewer(player.getUniqueId());
             }
@@ -146,6 +166,9 @@ public class PacketTriangle implements Shape {
         viewers.remove(player);
         viewerUUIDs.remove(player.getUniqueId());
         if (spawned) {
+            if (rootAnchor != null) {
+                rootAnchor.removeViewer(player.getUniqueId());
+            }
             for (WrapperEntity entity : entities) {
                 entity.removeViewer(player.getUniqueId());
             }
@@ -179,6 +202,12 @@ public class PacketTriangle implements Shape {
     public void teleportOrigin(Location newOrigin) {
         if (!spawned) return;
 
+        if (rootAnchorEnabled && rootAnchor != null) {
+            PacketRootAnchorSupport.teleportRootAnchor(rootAnchor, entities, origin, newOrigin);
+            this.origin = newOrigin.clone();
+            return;
+        }
+
         float deltaX = (float) (newOrigin.getX() - origin.getX());
         float deltaY = (float) (newOrigin.getY() - origin.getY());
         float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
@@ -189,12 +218,22 @@ public class PacketTriangle implements Shape {
         for (WrapperEntity entity : entities) {
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 com.github.retrooper.packetevents.util.Vector3f old = displayMeta.getTranslation();
+                displayMeta.setInterpolationDelay(0);
+                displayMeta.setTransformationInterpolationDuration(0);
+                displayMeta.setPositionRotationInterpolationDuration(0);
                 displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
                         old.getX() - deltaX,
                         old.getY() - deltaY,
                         old.getZ() - deltaZ));
+                entity.sendPacketToViewers(new WrapperPlayServerBundle());
+                entity.sendPacketToViewers(entity.getEntityMeta().createPacket());
+                entity.sendPacketToViewers(new WrapperPlayServerEntityTeleport(
+                        entity.getEntityId(), peLoc.getPosition(), peLoc.getYaw(), peLoc.getPitch(), false));
+                entity.sendPacketToViewers(new WrapperPlayServerBundle());
+                entity.setLocation(peLoc);
+            } else {
+                entity.teleport(peLoc);
             }
-            entity.teleport(peLoc);
         }
 
         this.origin = newOrigin.clone();
@@ -215,6 +254,7 @@ public class PacketTriangle implements Shape {
         private int skyLight = 15;
         private boolean seeThrough = true;
         private float viewRange = 1.0f;
+        private boolean rootAnchorEnabled = false;
 
         public Builder(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
             this.origin = origin;
@@ -251,6 +291,12 @@ public class PacketTriangle implements Shape {
         @Override
         public Builder viewRange(float viewRange) {
             this.viewRange = viewRange;
+            return this;
+        }
+
+        @Override
+        public Builder rootAnchor(boolean enabled) {
+            this.rootAnchorEnabled = enabled;
             return this;
         }
 

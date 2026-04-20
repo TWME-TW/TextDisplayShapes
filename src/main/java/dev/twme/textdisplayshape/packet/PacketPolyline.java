@@ -13,6 +13,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBundle;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
@@ -39,10 +41,12 @@ public class PacketPolyline implements Shape {
     private final int skyLight;
     private final boolean seeThrough;
     private final float viewRange;
+    private final boolean rootAnchorEnabled;
 
     private final List<WrapperEntity> entities = new ArrayList<>();
     private final Set<UUID> viewerUUIDs = new HashSet<>();
     private final Set<Player> viewers = new HashSet<>();
+    private WrapperEntity rootAnchor;
     private boolean spawned = false;
 
     private PacketPolyline(Builder builder) {
@@ -57,12 +61,17 @@ public class PacketPolyline implements Shape {
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
         this.viewRange = builder.viewRange;
+        this.rootAnchorEnabled = builder.rootAnchorEnabled;
     }
 
     @Override
     public void spawn() {
         if (spawned)
             return;
+
+        if (rootAnchorEnabled && points.size() >= 2) {
+            rootAnchor = PacketRootAnchorSupport.createRootAnchor(origin, viewRange, viewerUUIDs);
+        }
 
         if (points.size() < 2) {
             spawned = true;
@@ -127,6 +136,10 @@ public class PacketPolyline implements Shape {
         }
 
         entities.add(entity);
+
+        if (rootAnchorEnabled) {
+            PacketRootAnchorSupport.attachPassenger(rootAnchor, entity);
+        }
     }
 
     private void setTransformFromMatrix(WrapperEntity entity, Matrix4f matrix) {
@@ -156,6 +169,10 @@ public class PacketPolyline implements Shape {
             entity.remove();
         }
         entities.clear();
+        if (rootAnchor != null) {
+            rootAnchor.remove();
+            rootAnchor = null;
+        }
         spawned = false;
     }
 
@@ -169,6 +186,9 @@ public class PacketPolyline implements Shape {
         viewers.add(player);
         viewerUUIDs.add(player.getUniqueId());
         if (spawned) {
+            if (rootAnchor != null) {
+                rootAnchor.addViewer(player.getUniqueId());
+            }
             for (WrapperEntity entity : entities) {
                 entity.addViewer(player.getUniqueId());
             }
@@ -180,6 +200,9 @@ public class PacketPolyline implements Shape {
         viewers.remove(player);
         viewerUUIDs.remove(player.getUniqueId());
         if (spawned) {
+            if (rootAnchor != null) {
+                rootAnchor.removeViewer(player.getUniqueId());
+            }
             for (WrapperEntity entity : entities) {
                 entity.removeViewer(player.getUniqueId());
             }
@@ -213,6 +236,12 @@ public class PacketPolyline implements Shape {
     public void teleportOrigin(Location newOrigin) {
         if (!spawned) return;
 
+        if (rootAnchorEnabled && rootAnchor != null) {
+            PacketRootAnchorSupport.teleportRootAnchor(rootAnchor, entities, origin, newOrigin);
+            this.origin = newOrigin.clone();
+            return;
+        }
+
         float deltaX = (float) (newOrigin.getX() - origin.getX());
         float deltaY = (float) (newOrigin.getY() - origin.getY());
         float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
@@ -223,12 +252,22 @@ public class PacketPolyline implements Shape {
         for (WrapperEntity entity : entities) {
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 com.github.retrooper.packetevents.util.Vector3f old = displayMeta.getTranslation();
+                displayMeta.setInterpolationDelay(0);
+                displayMeta.setTransformationInterpolationDuration(0);
+                displayMeta.setPositionRotationInterpolationDuration(0);
                 displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
                         old.getX() - deltaX,
                         old.getY() - deltaY,
                         old.getZ() - deltaZ));
+                entity.sendPacketToViewers(new WrapperPlayServerBundle());
+                entity.sendPacketToViewers(entity.getEntityMeta().createPacket());
+                entity.sendPacketToViewers(new WrapperPlayServerEntityTeleport(
+                        entity.getEntityId(), peLoc.getPosition(), peLoc.getYaw(), peLoc.getPitch(), false));
+                entity.sendPacketToViewers(new WrapperPlayServerBundle());
+                entity.setLocation(peLoc);
+            } else {
+                entity.teleport(peLoc);
             }
-            entity.teleport(peLoc);
         }
 
         this.origin = newOrigin.clone();
@@ -261,6 +300,7 @@ public class PacketPolyline implements Shape {
         private int skyLight = 15;
         private boolean seeThrough = true;
         private float viewRange = 1.0f;
+        private boolean rootAnchorEnabled = false;
 
         public Builder(Location origin, List<Vector3f> points, float thickness) {
             this.origin = origin;
@@ -317,6 +357,12 @@ public class PacketPolyline implements Shape {
         @Override
         public Builder viewRange(float viewRange) {
             this.viewRange = viewRange;
+            return this;
+        }
+
+        @Override
+        public Builder rootAnchor(boolean enabled) {
+            this.rootAnchorEnabled = enabled;
             return this;
         }
 

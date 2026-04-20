@@ -13,6 +13,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBundle;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
@@ -40,10 +42,12 @@ public class PacketLine implements Shape {
     private final int skyLight;
     private final boolean seeThrough;
     private final float viewRange;
+    private final boolean rootAnchorEnabled;
 
     private final List<WrapperEntity> entities = new ArrayList<>();
     private final Set<UUID> viewerUUIDs = new HashSet<>();
     private final Set<Player> viewers = new HashSet<>();
+    private WrapperEntity rootAnchor;
     private boolean spawned = false;
 
     private PacketLine(Builder builder) {
@@ -58,12 +62,17 @@ public class PacketLine implements Shape {
         this.skyLight = builder.skyLight;
         this.seeThrough = builder.seeThrough;
         this.viewRange = builder.viewRange;
+        this.rootAnchorEnabled = builder.rootAnchorEnabled;
     }
 
     @Override
     public void spawn() {
         if (spawned)
             return;
+
+        if (rootAnchorEnabled) {
+            rootAnchor = PacketRootAnchorSupport.createRootAnchor(origin, viewRange, viewerUUIDs);
+        }
 
         // Front face: p1 -> p2
         Matrix4f matrix = TextDisplayUtil.textDisplayLine(p1, p2, thickness, roll);
@@ -113,6 +122,10 @@ public class PacketLine implements Shape {
         }
 
         entities.add(entity);
+
+        if (rootAnchorEnabled) {
+            PacketRootAnchorSupport.attachPassenger(rootAnchor, entity);
+        }
     }
 
     /**
@@ -148,6 +161,10 @@ public class PacketLine implements Shape {
             entity.remove();
         }
         entities.clear();
+        if (rootAnchor != null) {
+            rootAnchor.remove();
+            rootAnchor = null;
+        }
         spawned = false;
     }
 
@@ -161,6 +178,9 @@ public class PacketLine implements Shape {
         viewers.add(player);
         viewerUUIDs.add(player.getUniqueId());
         if (spawned) {
+            if (rootAnchor != null) {
+                rootAnchor.addViewer(player.getUniqueId());
+            }
             for (WrapperEntity entity : entities) {
                 entity.addViewer(player.getUniqueId());
             }
@@ -172,6 +192,9 @@ public class PacketLine implements Shape {
         viewers.remove(player);
         viewerUUIDs.remove(player.getUniqueId());
         if (spawned) {
+            if (rootAnchor != null) {
+                rootAnchor.removeViewer(player.getUniqueId());
+            }
             for (WrapperEntity entity : entities) {
                 entity.removeViewer(player.getUniqueId());
             }
@@ -205,6 +228,12 @@ public class PacketLine implements Shape {
     public void teleportOrigin(Location newOrigin) {
         if (!spawned) return;
 
+        if (rootAnchorEnabled && rootAnchor != null) {
+            PacketRootAnchorSupport.teleportRootAnchor(rootAnchor, entities, origin, newOrigin);
+            this.origin = newOrigin.clone();
+            return;
+        }
+
         float deltaX = (float) (newOrigin.getX() - origin.getX());
         float deltaY = (float) (newOrigin.getY() - origin.getY());
         float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
@@ -215,12 +244,26 @@ public class PacketLine implements Shape {
         for (WrapperEntity entity : entities) {
             if (entity.getEntityMeta() instanceof AbstractDisplayMeta displayMeta) {
                 com.github.retrooper.packetevents.util.Vector3f old = displayMeta.getTranslation();
+                // Both position (teleport) and translation interpolate over the same duration,
+                // so the visual world position stays constant — no flicker.
+                displayMeta.setInterpolationDelay(0);
+                displayMeta.setTransformationInterpolationDuration(0);
+                displayMeta.setPositionRotationInterpolationDuration(0);
                 displayMeta.setTranslation(new com.github.retrooper.packetevents.util.Vector3f(
                         old.getX() - deltaX,
                         old.getY() - deltaY,
                         old.getZ() - deltaZ));
+                // Send metadata + teleport inside a Bundle Delimiter so the client
+                // processes both packets atomically in the same game tick.
+                entity.sendPacketToViewers(new WrapperPlayServerBundle());
+                entity.sendPacketToViewers(entity.getEntityMeta().createPacket());
+                entity.sendPacketToViewers(new WrapperPlayServerEntityTeleport(
+                        entity.getEntityId(), peLoc.getPosition(), peLoc.getYaw(), peLoc.getPitch(), false));
+                entity.sendPacketToViewers(new WrapperPlayServerBundle());
+                entity.setLocation(peLoc);
+            } else {
+                entity.teleport(peLoc);
             }
-            entity.teleport(peLoc);
         }
 
         this.origin = newOrigin.clone();
@@ -242,6 +285,7 @@ public class PacketLine implements Shape {
         private int skyLight = 15;
         private boolean seeThrough = true;
         private float viewRange = 1.0f;
+        private boolean rootAnchorEnabled = false;
 
         public Builder(Location origin, Vector3f p1, Vector3f p2, float thickness) {
             this.origin = origin;
@@ -304,6 +348,12 @@ public class PacketLine implements Shape {
         @Override
         public Builder viewRange(float viewRange) {
             this.viewRange = viewRange;
+            return this;
+        }
+
+        @Override
+        public Builder rootAnchor(boolean enabled) {
+            this.rootAnchorEnabled = enabled;
             return this;
         }
 
