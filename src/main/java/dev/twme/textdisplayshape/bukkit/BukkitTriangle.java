@@ -18,7 +18,6 @@ import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
 import dev.twme.textdisplayshape.util.TRSResult;
 import dev.twme.textdisplayshape.util.TextDisplayUtil;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 
 /**
  * Triangle implementation using Bukkit API to directly manipulate TextDisplay
@@ -85,7 +84,7 @@ public class BukkitTriangle implements Shape {
                 trs.rightRotation());
 
         TextDisplay display = origin.getWorld().spawn(origin, TextDisplay.class, (d) -> {
-            d.text(MiniMessage.miniMessage().deserialize(" "));
+            d.setText(" ");
             d.setBackgroundColor(color);
             d.setBrightness(new Display.Brightness(blockLight, skyLight));
             d.setTransformation(transformation);
