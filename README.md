@@ -139,13 +139,16 @@ line.remove();
 
 ## JavaDoc
 
-You can find the JavaDoc [here](https://repo.twme.dev/javadoc/snapshots/dev/twme/TextDisplayShape/1.0.6).
+You can find the JavaDoc [here](https://repo.twme.dev/javadoc/snapshots/dev/twme/TextDisplayShape/1.3.0).
 
 ## Dependencies
 
 - Spigot/Paper 1.21+
 - [PacketEvents](https://github.com/retrooper/packetevents) (for packet mode)
 - [EntityLib](https://github.com/Tofaa2/EntityLib) (for packet mode)
+
+## Example Projects
+- [WorldEditDisplay](https://github.com/TWME-TW/WorldEditDisplay): Renders WorldEdit selections using TextDisplayShapes
 
 ## License
 
