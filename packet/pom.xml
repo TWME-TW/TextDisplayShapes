@@ -10,10 +10,10 @@
         <version>1.3.0</version>
     </parent>
 
-    <artifactId>textdisplayshape-entitylib-spigot</artifactId>
+    <artifactId>textdisplayshape-packet</artifactId>
     <packaging>jar</packaging>
-    <name>TextDisplayShape EntityLib Spigot</name>
-    <description>EntityLib/PacketEvents implementation for TextDisplayShapes on Spigot/Paper</description>
+    <name>TextDisplayShape Packet</name>
+    <description>Packet-based implementation for TextDisplayShapes using EntityLib/PacketEvents</description>
 
     <build>
         <plugins>

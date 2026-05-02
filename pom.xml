@@ -14,7 +14,7 @@
     <modules>
         <module>api</module>
         <module>bukkit</module>
-        <module>entitylib-spigot</module>
+        <module>packet</module>
     </modules>
 
     <properties>
