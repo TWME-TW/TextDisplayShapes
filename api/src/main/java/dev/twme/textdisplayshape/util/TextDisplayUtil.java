@@ -13,6 +13,8 @@ import org.joml.Vector3f;
 /**
  * Core utility class for TextDisplay shape rendering calculations.
  * Supports triangles, lines, and parallelograms.
+ *
+ * <p>This class is platform-agnostic and uses only JOML math types.</p>
  */
 public class TextDisplayUtil {
 

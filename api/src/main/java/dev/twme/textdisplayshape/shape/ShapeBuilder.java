@@ -1,22 +1,25 @@
 package dev.twme.textdisplayshape.shape;
 
-import org.bukkit.Color;
-
 /**
  * Base builder interface for creating shapes.
  * Provides a fluent API to configure shape appearance properties.
+ *
+ * <p>This interface is platform-agnostic. Colors are represented as ARGB
+ * integers instead of platform-specific color classes.</p>
  *
  * @param <T> the type of shape to build
  */
 public interface ShapeBuilder<T extends Shape> {
 
     /**
-     * Sets the background color of the shape.
+     * Sets the background color of the shape as an ARGB integer.
+     * <p>
+     * Format: {@code (alpha << 24) | (red << 16) | (green << 8) | blue}
      *
-     * @param color the color (including ARGB)
+     * @param argb the color in ARGB format
      * @return this builder
      */
-    ShapeBuilder<T> color(Color color);
+    ShapeBuilder<T> color(int argb);
 
     /**
      * Sets whether the shape is double-sided.

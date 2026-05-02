@@ -9,7 +9,6 @@ import java.util.UUID;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.util.Transformation;
 import org.joml.Vector3f;
@@ -45,7 +44,7 @@ public class BukkitParallelogram implements Shape {
         this.p1 = builder.p1;
         this.p2 = builder.p2;
         this.p3 = builder.p3;
-        this.color = builder.color;
+        this.color = Color.fromARGB(builder.argbColor);
         this.doubleSided = builder.doubleSided;
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
@@ -55,33 +54,20 @@ public class BukkitParallelogram implements Shape {
 
     @Override
     public void spawn() {
-        if (spawned)
-            return;
-
-        // Front face: p1, p2, p3 — use analytical TRS for precision
+        if (spawned) return;
         TRSResult frontTRS = TextDisplayUtil.computeParallelogramTRS(p1, p2, p3);
         spawnTextDisplay(frontTRS);
-
-        // Back face: swap p2 and p3
         if (doubleSided) {
             TRSResult backTRS = TextDisplayUtil.computeParallelogramTRS(p1, p3, p2);
             spawnTextDisplay(backTRS);
         }
-
         spawned = true;
     }
 
     private void spawnTextDisplay(TRSResult trs) {
-        // Adjust translation: convert from absolute world coordinates to relative to spawn location
-        Vector3f adjustedTranslation = new Vector3f(trs.translation())
+        Vector3f adj = new Vector3f(trs.translation())
                 .sub((float) origin.getX(), (float) origin.getY(), (float) origin.getZ());
-
-        Transformation transformation = new Transformation(
-                adjustedTranslation,
-                trs.leftRotation(),
-                trs.scale(),
-                trs.rightRotation());
-
+        Transformation transformation = new Transformation(adj, trs.leftRotation(), trs.scale(), trs.rightRotation());
         TextDisplay display = origin.getWorld().spawn(origin, TextDisplay.class, (d) -> {
             d.text(MiniMessage.miniMessage().deserialize(" "));
             d.setBackgroundColor(color);
@@ -95,131 +81,61 @@ public class BukkitParallelogram implements Shape {
 
     @Override
     public void remove() {
-        for (TextDisplay display : displays) {
-            if (display.isValid()) {
-                display.remove();
-            }
-        }
+        for (TextDisplay d : displays) { if (d.isValid()) d.remove(); }
         displays.clear();
         spawned = false;
     }
 
-    @Override
-    public boolean isSpawned() {
-        return spawned;
-    }
-
-    @Override
-    public void addViewer(Player player) {
-        // In Bukkit implementation, all players can see the entity
-    }
-
-    @Override
-    public void removeViewer(Player player) {
-        // In Bukkit implementation, cannot control individual player visibility
-    }
-
-    @Override
-    public Set<Player> getViewers() {
-        return new HashSet<>();
-    }
+    @Override public boolean isSpawned() { return spawned; }
+    @Override public void addViewer(UUID playerUUID) { }
+    @Override public void removeViewer(UUID playerUUID) { }
+    @Override public Set<UUID> getViewerUUIDs() { return new HashSet<>(); }
 
     @Override
     public List<UUID> getEntityUUIDs() {
         List<UUID> uuids = new ArrayList<>();
-        for (TextDisplay display : displays) {
-            uuids.add(display.getUniqueId());
-        }
+        for (TextDisplay d : displays) uuids.add(d.getUniqueId());
         return uuids;
     }
 
-    /**
-     * Gets all TextDisplay entities of this shape.
-     *
-     * @return list of TextDisplay entities
-     */
-    public List<TextDisplay> getEntities() {
-        return new ArrayList<>(displays);
-    }
+    public List<TextDisplay> getEntities() { return new ArrayList<>(displays); }
 
     @Override
-    public void teleportOrigin(Location newOrigin) {
+    public void teleportOrigin(double x, double y, double z) {
         if (!spawned) return;
-
-        float deltaX = (float) (newOrigin.getX() - origin.getX());
-        float deltaY = (float) (newOrigin.getY() - origin.getY());
-        float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
-
+        Location newOrigin = new Location(origin.getWorld(), x, y, z);
+        float dx = (float)(x - origin.getX()), dy = (float)(y - origin.getY()), dz = (float)(z - origin.getZ());
         for (TextDisplay display : displays) {
             if (!display.isValid()) continue;
             org.bukkit.util.Transformation t = display.getTransformation();
             org.joml.Vector3f tr = t.getTranslation();
             display.setTransformation(new org.bukkit.util.Transformation(
-                    new org.joml.Vector3f(tr.x - deltaX, tr.y - deltaY, tr.z - deltaZ),
+                    new org.joml.Vector3f(tr.x - dx, tr.y - dy, tr.z - dz),
                     t.getLeftRotation(), t.getScale(), t.getRightRotation()));
             display.teleport(newOrigin);
         }
-
         this.origin = newOrigin.clone();
     }
 
-    /**
-     * Builder class.
-     */
     public static class Builder implements ShapeBuilder<BukkitParallelogram> {
         private final Location origin;
-        private final Vector3f p1;
-        private final Vector3f p2;
-        private final Vector3f p3;
-
-        private Color color = Color.fromARGB(150, 100, 50, 150);
+        private final Vector3f p1, p2, p3;
+        private int argbColor = Color.fromARGB(150, 100, 50, 150).asARGB();
         private boolean doubleSided = false;
-        private int blockLight = 15;
-        private int skyLight = 15;
+        private int blockLight = 15, skyLight = 15;
         private boolean seeThrough = true;
         private float viewRange = 1.0f;
 
         public Builder(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
-            this.origin = origin;
-            this.p1 = p1;
-            this.p2 = p2;
-            this.p3 = p3;
+            this.origin = origin; this.p1 = p1; this.p2 = p2; this.p3 = p3;
         }
 
-        @Override
-        public Builder color(Color color) {
-            this.color = color;
-            return this;
-        }
-
-        @Override
-        public Builder doubleSided(boolean doubleSided) {
-            this.doubleSided = doubleSided;
-            return this;
-        }
-
-        @Override
-        public Builder brightness(int block, int sky) {
-            this.blockLight = block;
-            this.skyLight = sky;
-            return this;
-        }
-
-        @Override
-        public Builder seeThrough(boolean seeThrough) {
-            this.seeThrough = seeThrough;
-            return this;
-        }
-
-        @Override
-        public Builder viewRange(float viewRange) {
-            this.viewRange = viewRange;
-            return this;
-        }
-
-        @Override
-        public BukkitParallelogram build() {
-            return new BukkitParallelogram(this);
-        }
+        public Builder color(Color color) { this.argbColor = color.asARGB(); return this; }
+        @Override public Builder color(int argb) { this.argbColor = argb; return this; }
+        @Override public Builder doubleSided(boolean v) { this.doubleSided = v; return this; }
+        @Override public Builder brightness(int b, int s) { this.blockLight = b; this.skyLight = s; return this; }
+        @Override public Builder seeThrough(boolean v) { this.seeThrough = v; return this; }
+        @Override public Builder viewRange(float v) { this.viewRange = v; return this; }
+        @Override public BukkitParallelogram build() { return new BukkitParallelogram(this); }
     }
 }

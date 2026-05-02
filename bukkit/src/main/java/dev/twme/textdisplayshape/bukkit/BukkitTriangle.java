@@ -9,27 +9,26 @@ import java.util.UUID;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
-import org.joml.Matrix4f;
+import org.bukkit.util.Transformation;
 import org.joml.Vector3f;
 
 import dev.twme.textdisplayshape.shape.Shape;
 import dev.twme.textdisplayshape.shape.ShapeBuilder;
+import dev.twme.textdisplayshape.util.TRSResult;
 import dev.twme.textdisplayshape.util.TextDisplayUtil;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 /**
- * Line implementation using Bukkit API to directly manipulate TextDisplay
+ * Triangle implementation using Bukkit API to directly manipulate TextDisplay
  * entities.
  */
-public class BukkitLine implements Shape {
+public class BukkitTriangle implements Shape {
 
     private Location origin;
     private final Vector3f p1;
     private final Vector3f p2;
-    private final float thickness;
-    private final float roll;
+    private final Vector3f p3;
     private final Color color;
     private final boolean doubleSided;
     private final int blockLight;
@@ -40,13 +39,12 @@ public class BukkitLine implements Shape {
     private final List<TextDisplay> displays = new ArrayList<>();
     private boolean spawned = false;
 
-    private BukkitLine(Builder builder) {
+    private BukkitTriangle(Builder builder) {
         this.origin = builder.origin;
         this.p1 = builder.p1;
         this.p2 = builder.p2;
-        this.thickness = builder.thickness;
-        this.roll = builder.roll;
-        this.color = builder.color;
+        this.p3 = builder.p3;
+        this.color = Color.fromARGB(builder.argbColor);
         this.doubleSided = builder.doubleSided;
         this.blockLight = builder.blockLight;
         this.skyLight = builder.skyLight;
@@ -59,34 +57,37 @@ public class BukkitLine implements Shape {
         if (spawned)
             return;
 
-        // Front face: p1 -> p2
-        Matrix4f matrix = TextDisplayUtil.textDisplayLine(p1, p2, thickness, roll);
-        spawnTextDisplay(matrix);
+        // Front face: p1, p2, p3 — use analytical TRS for precision
+        for (TRSResult trs : TextDisplayUtil.computeTriangleTRS(p1, p2, p3)) {
+            spawnTextDisplay(trs);
+        }
 
-        // Back face: swap p1 and p2, and invert roll
+        // Back face: swap p2 and p3
         if (doubleSided) {
-            Matrix4f backMatrix = TextDisplayUtil.textDisplayLine(p2, p1, thickness, -roll);
-            spawnTextDisplay(backMatrix);
+            for (TRSResult trs : TextDisplayUtil.computeTriangleTRS(p1, p3, p2)) {
+                spawnTextDisplay(trs);
+            }
         }
 
         spawned = true;
     }
 
-    private void spawnTextDisplay(Matrix4f matrix) {
-        // Adjust transformation matrix: convert absolute coordinates to relative to
-        // spawn location
-        Matrix4f adjustedMatrix = new Matrix4f()
-                .translate(
-                        (float) -origin.getX(),
-                        (float) -origin.getY(),
-                        (float) -origin.getZ())
-                .mul(matrix);
+    private void spawnTextDisplay(TRSResult trs) {
+        // Adjust translation: convert from absolute world coordinates to relative to spawn location
+        Vector3f adjustedTranslation = new Vector3f(trs.translation())
+                .sub((float) origin.getX(), (float) origin.getY(), (float) origin.getZ());
+
+        Transformation transformation = new Transformation(
+                adjustedTranslation,
+                trs.leftRotation(),
+                trs.scale(),
+                trs.rightRotation());
 
         TextDisplay display = origin.getWorld().spawn(origin, TextDisplay.class, (d) -> {
             d.text(MiniMessage.miniMessage().deserialize(" "));
             d.setBackgroundColor(color);
             d.setBrightness(new Display.Brightness(blockLight, skyLight));
-            d.setTransformationMatrix(adjustedMatrix);
+            d.setTransformation(transformation);
             d.setSeeThrough(seeThrough);
             d.setViewRange(viewRange);
         });
@@ -110,17 +111,20 @@ public class BukkitLine implements Shape {
     }
 
     @Override
-    public void addViewer(Player player) {
+    public void addViewer(UUID playerUUID) {
         // In Bukkit implementation, all players can see the entity
+        // This method is reserved for packet mode
     }
 
     @Override
-    public void removeViewer(Player player) {
+    public void removeViewer(UUID playerUUID) {
         // In Bukkit implementation, cannot control individual player visibility
+        // This method is reserved for packet mode
     }
 
     @Override
-    public Set<Player> getViewers() {
+    public Set<UUID> getViewerUUIDs() {
+        // Returns empty set since Bukkit mode is visible to all players
         return new HashSet<>();
     }
 
@@ -143,12 +147,14 @@ public class BukkitLine implements Shape {
     }
 
     @Override
-    public void teleportOrigin(Location newOrigin) {
+    public void teleportOrigin(double x, double y, double z) {
         if (!spawned) return;
 
-        float deltaX = (float) (newOrigin.getX() - origin.getX());
-        float deltaY = (float) (newOrigin.getY() - origin.getY());
-        float deltaZ = (float) (newOrigin.getZ() - origin.getZ());
+        Location newOrigin = new Location(origin.getWorld(), x, y, z);
+
+        float deltaX = (float) (x - origin.getX());
+        float deltaY = (float) (y - origin.getY());
+        float deltaZ = (float) (z - origin.getZ());
 
         for (TextDisplay display : displays) {
             if (!display.isValid()) continue;
@@ -166,56 +172,40 @@ public class BukkitLine implements Shape {
     /**
      * Builder class.
      */
-    public static class Builder implements ShapeBuilder<BukkitLine> {
+    public static class Builder implements ShapeBuilder<BukkitTriangle> {
         private final Location origin;
         private final Vector3f p1;
         private final Vector3f p2;
-        private final float thickness;
+        private final Vector3f p3;
 
-        private float roll = 0f;
-        private Color color = Color.fromARGB(200, 255, 100, 100);
+        private int argbColor = Color.fromARGB(150, 50, 100, 100).asARGB();
         private boolean doubleSided = false;
         private int blockLight = 15;
         private int skyLight = 15;
         private boolean seeThrough = true;
         private float viewRange = 1.0f;
 
-        public Builder(Location origin, Vector3f p1, Vector3f p2, float thickness) {
+        public Builder(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
             this.origin = origin;
             this.p1 = p1;
             this.p2 = p2;
-            this.thickness = thickness;
+            this.p3 = p3;
         }
 
         /**
-         * Sets the roll angle (rotation around the line axis).
-         * This allows the line surface to face different directions.
-         * Default is 0 (facing up when the line is horizontal).
+         * Sets the background color using a Bukkit Color.
          *
-         * @param roll the roll angle in radians
+         * @param color the Bukkit color (including ARGB)
          * @return this builder
          */
-        public Builder roll(float roll) {
-            this.roll = roll;
-            return this;
-        }
-
-        /**
-         * Sets the roll angle in degrees (rotation around the line axis).
-         * This allows the line surface to face different directions.
-         * Default is 0 (facing up when the line is horizontal).
-         *
-         * @param degrees the roll angle in degrees
-         * @return this builder
-         */
-        public Builder rollDegrees(float degrees) {
-            this.roll = (float) Math.toRadians(degrees);
+        public Builder color(Color color) {
+            this.argbColor = color.asARGB();
             return this;
         }
 
         @Override
-        public Builder color(Color color) {
-            this.color = color;
+        public Builder color(int argb) {
+            this.argbColor = argb;
             return this;
         }
 
@@ -245,8 +235,8 @@ public class BukkitLine implements Shape {
         }
 
         @Override
-        public BukkitLine build() {
-            return new BukkitLine(this);
+        public BukkitTriangle build() {
+            return new BukkitTriangle(this);
         }
     }
 }
