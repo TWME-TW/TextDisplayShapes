@@ -49,7 +49,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-paper</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -59,7 +59,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-spigot</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -69,7 +69,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-packet</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -79,7 +79,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-api</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -210,7 +210,7 @@ The 2.0 release includes breaking API changes:
 
 ## JavaDoc
 
-You can find the JavaDoc [here](https://repo.twme.dev/javadoc/snapshots/dev/twme/TextDisplayShape/2.0.0).
+You can find the JavaDoc [here](https://repo.twme.dev/javadoc/snapshots/dev/twme/TextDisplayShape/2.0.0-SNAPSHOT).
 
 ## Dependencies
 
