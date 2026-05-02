@@ -5,8 +5,9 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
 ## Features
 
 - **Multiple Shape Types**: Triangle, Line, Polyline, Parallelogram
-- **Two Rendering Modes**:
-  - **Bukkit Mode**: Direct entity manipulation, visible to all players
+- **Three Rendering Modes**:
+  - **Paper Mode**: Direct entity manipulation using Paper's Adventure API, visible to all players
+  - **Spigot Mode**: Direct entity manipulation compatible with Spigot servers, visible to all players
   - **Packet Mode**: EntityLib-based, only visible to specified viewers
 - **Modular Design**: Platform-agnostic API module can be reused across Bukkit, Fabric, Minestom, etc.
 - **Customizable**: Color, brightness, transparency, double-sided rendering
@@ -18,14 +19,16 @@ A Minecraft library for rendering geometric shapes using TextDisplay entities. S
 ```
 TextDisplayShapes/
 ├── api/       Platform-agnostic interfaces & math utilities (JOML only)
-├── bukkit/    Bukkit implementation using direct entity manipulation
+├── paper/     Paper implementation (uses Adventure API)
+├── spigot/    Spigot implementation (compatible with Spigot servers)
 └── packet/    Packet-based implementation using EntityLib/PacketEvents
 ```
 
 | Module | Artifact ID | Description |
 |--------|-------------|-------------|
 | **API** | `textdisplayshape-api` | Core interfaces (`Shape`, `ShapeBuilder`) and math utilities. No platform dependencies. |
-| **Bukkit** | `textdisplayshape-bukkit` | Bukkit/Paper implementation using real TextDisplay entities. |
+| **Paper** | `textdisplayshape-paper` | Paper implementation using Adventure API for text rendering. |
+| **Spigot** | `textdisplayshape-spigot` | Spigot-compatible implementation using standard Bukkit API. |
 | **Packet** | `textdisplayshape-packet` | Packet-based implementation using EntityLib + PacketEvents. |
 
 ## Installation
@@ -40,17 +43,27 @@ TextDisplayShapes/
 </repository>
 ```
 
-**Bukkit mode only:**
+**Paper mode (recommended for Paper servers):**
 
 ```xml
 <dependency>
     <groupId>dev.twme</groupId>
-    <artifactId>textdisplayshape-bukkit</artifactId>
+    <artifactId>textdisplayshape-paper</artifactId>
     <version>2.0.0</version>
 </dependency>
 ```
 
-**Packet mode only:**
+**Spigot mode (for Spigot servers):**
+
+```xml
+<dependency>
+    <groupId>dev.twme</groupId>
+    <artifactId>textdisplayshape-spigot</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+
+**Packet mode:**
 
 ```xml
 <dependency>
@@ -74,7 +87,9 @@ TextDisplayShapes/
 
 > **Note**: When providing a `Location` as the origin, please avoid including the pitch and yaw (set them to 0). Passing a location with rotation data (e.g., `player.getLocation()`) may cause unexpected behavior in shape orientation.
 
-### Bukkit Mode (Direct Entity)
+### Paper / Spigot Mode (Direct Entity)
+
+Both Paper and Spigot modules share the same `BukkitShapeFactory` API. Simply depend on the appropriate module for your server platform.
 
 ```java
 BukkitShapeFactory bukkit = new BukkitShapeFactory();
@@ -166,7 +181,7 @@ line.remove();
 | Method | Description |
 |--------|-------------|
 | `.color(int argb)` | Set background color as ARGB integer |
-| `.color(Color)` | Set background color using Bukkit Color (Bukkit/Packet builders) |
+| `.color(Color)` | Set background color using Bukkit Color (Paper/Spigot/Packet builders) |
 | `.doubleSided(boolean)` | Enable double-sided rendering |
 | `.brightness(int block, int sky)` | Set brightness (0-15) |
 | `.seeThrough(boolean)` | Make visible through blocks |
@@ -188,8 +203,8 @@ The 2.0 release includes breaking API changes:
 | `shape.removeViewer(Player)` | `shape.removeViewer(player.getUniqueId())` |
 | `shape.getViewers()` | `shape.getViewerUUIDs()` |
 | `shape.teleportOrigin(Location)` | `shape.teleportOrigin(x, y, z)` |
-| `.color(Color)` (API) | `.color(int argb)` (API), `.color(Color)` still available in Bukkit/Packet builders |
-| Single `TextDisplayShape` artifact | Separate `textdisplayshape-api`, `textdisplayshape-bukkit`, `textdisplayshape-packet` |
+| `.color(Color)` (API) | `.color(int argb)` (API), `.color(Color)` still available in builders |
+| Single `TextDisplayShape` artifact | Separate `textdisplayshape-api`, `textdisplayshape-paper`, `textdisplayshape-spigot`, `textdisplayshape-packet` |
 
 > **Why UUID instead of Player?** Bukkit invalidates `Player` objects on respawn, creating new instances with different hash codes. Storing `Player` references in a `Set` causes memory leaks and silent removal failures. Using `UUID` avoids these issues entirely.
 
@@ -199,7 +214,7 @@ You can find the JavaDoc [here](https://repo.twme.dev/javadoc/snapshots/dev/twme
 
 ## Dependencies
 
-- Spigot/Paper 1.21+
+- Paper 1.21+ (for paper module) or Spigot 1.21+ (for spigot module)
 - [PacketEvents](https://github.com/retrooper/packetevents) (for packet mode)
 - [EntityLib](https://github.com/Tofaa2/EntityLib) (for packet mode)
 

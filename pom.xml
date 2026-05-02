@@ -13,7 +13,8 @@
 
     <modules>
         <module>api</module>
-        <module>bukkit</module>
+        <module>paper</module>
+        <module>spigot</module>
         <module>packet</module>
     </modules>
 
@@ -50,6 +51,10 @@
         <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
         <repository>
         <id>codemc-releases</id>

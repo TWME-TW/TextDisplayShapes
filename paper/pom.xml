@@ -10,10 +10,10 @@
         <version>2.0.0</version>
     </parent>
 
-    <artifactId>textdisplayshape-bukkit</artifactId>
+    <artifactId>textdisplayshape-paper</artifactId>
     <packaging>jar</packaging>
-    <name>TextDisplayShape Bukkit</name>
-    <description>Bukkit implementation for TextDisplayShapes using direct entity manipulation</description>
+    <name>TextDisplayShape Paper</name>
+    <description>Paper implementation for TextDisplayShapes using direct entity manipulation and Adventure API</description>
 
     <build>
         <plugins>
