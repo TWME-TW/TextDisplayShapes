@@ -281,6 +281,23 @@ public class TextDisplayUtil {
         Quaternionf rightRotation = new Quaternionf().setFromNormalized(vtMat).normalize();
 
         Vector3f scale = new Vector3f((float) sigma1, finalSigma2, 1f);
+
+        // Mitigation: if rightRotation angle > 45°, use equivalent representation
+        // with negated X,Y scale to avoid Minecraft text display rendering artifacts.
+        //
+        // Equivalence proof:
+        //   L * diag(sx, sy, 1) * R
+        // = (L * Rz(π)) * diag(-sx, -sy, 1) * R
+        // because Rz(π) = diag(-1,-1,1), so Rz(π)*diag(-1,-1,1) = I
+        //
+        // Reference: Minecraft Text Display 3D Rendering Spec, Problem 1 (Matrix
+        // Decomposition Inconsistency / Flip Artifacts).
+        if (rightRotation.angle() > (float) (Math.PI / 4.0)) {
+            scale.x = -scale.x;
+            scale.y = -scale.y;
+            leftRotation.mul(new Quaternionf().rotateZ((float) Math.PI)).normalize();
+        }
+
         return new TRSResult(worldTranslation, leftRotation, scale, rightRotation);
     }
 
