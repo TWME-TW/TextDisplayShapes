@@ -49,7 +49,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-paper</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -59,7 +59,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-spigot</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -69,7 +69,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-packet</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -79,7 +79,7 @@ TextDisplayShapes/
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-api</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -212,10 +212,10 @@ The 2.0 release includes breaking API changes:
 
 Since version 2.0, the project is modularized. You can find the JavaDocs for each module below:
 
-- [API JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-api/2.0.1-SNAPSHOT)
-- [Paper JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-paper/2.0.1-SNAPSHOT)
-- [Spigot JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-spigot/2.0.1-SNAPSHOT)
-- [Packet JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-packet/2.0.1-SNAPSHOT)
+- [API JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-api/2.0.2-SNAPSHOT)
+- [Paper JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-paper/2.0.2SNAPSHOT)
+- [Spigot JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-spigot/2.0.2-SNAPSHOT)
+- [Packet JavaDoc](https://repo.twme.dev/javadoc/snapshots/dev/twme/textdisplayshape-packet/2.0.2-SNAPSHOT)
 
 ## Dependencies
 
