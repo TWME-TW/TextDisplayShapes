@@ -58,9 +58,15 @@
             <artifactId>spigot</artifactId>
             <version>3.3.4+b54a52a-SNAPSHOT</version>
             <scope>compile</scope>
+            <exclusions>
+                <!-- This artifact already bundles the common and API classes. -->
+                <exclusion>
+                    <groupId>io.github.tofaa2</groupId>
+                    <artifactId>common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
 </project>
-
 
