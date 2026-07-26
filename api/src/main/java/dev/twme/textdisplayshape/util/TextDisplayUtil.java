@@ -18,6 +18,46 @@ import org.joml.Vector3f;
  */
 public class TextDisplayUtil {
 
+    private static final float MIN_LENGTH_SQUARED = 1.0E-6F;
+    private static final float MIN_AREA_SQUARED = 1.0E-8F;
+
+    private static void requireFinite(Vector3f point, String name) {
+        if (point == null) {
+            throw new NullPointerException(name + " must not be null");
+        }
+        if (!point.isFinite()) {
+            throw new IllegalArgumentException(name + " must contain only finite coordinates");
+        }
+    }
+
+    private static void validateSurface(Vector3f point1, Vector3f point2, Vector3f point3) {
+        requireFinite(point1, "point1");
+        requireFinite(point2, "point2");
+        requireFinite(point3, "point3");
+
+        Vector3f firstEdge = new Vector3f(point2).sub(point1);
+        Vector3f secondEdge = new Vector3f(point3).sub(point1);
+        if (firstEdge.lengthSquared() < MIN_LENGTH_SQUARED
+                || secondEdge.lengthSquared() < MIN_LENGTH_SQUARED
+                || firstEdge.cross(secondEdge).lengthSquared() < MIN_AREA_SQUARED) {
+            throw new IllegalArgumentException("surface points must define a non-degenerate area");
+        }
+    }
+
+    private static void validateLine(Vector3f point1, Vector3f point2, float thickness, float roll) {
+        requireFinite(point1, "point1");
+        requireFinite(point2, "point2");
+        if (!Float.isFinite(thickness) || thickness <= 0f) {
+            throw new IllegalArgumentException("thickness must be finite and greater than zero");
+        }
+        if (!Float.isFinite(roll)) {
+            throw new IllegalArgumentException("roll must be finite");
+        }
+        if (point1.distanceSquared(point2) < MIN_LENGTH_SQUARED) {
+            throw new IllegalArgumentException("line endpoints must be distinct");
+        }
+    }
+
     /**
      * Creates a custom shear transformation matrix and multiplies it with the
      * original matrix.
@@ -64,12 +104,9 @@ public class TextDisplayUtil {
             Vector3f point1,
             Vector3f point2,
             Vector3f point3) {
+        validateSurface(point1, point2, point3);
         Vector3f p2 = new Vector3f(point2).sub(point1);
         Vector3f p3 = new Vector3f(point3).sub(point1);
-
-        if (new Vector3f(p2).cross(p3).lengthSquared() < 1.0E-4F) {
-            p3.add(0.0001f, 0.0001f, 0.0001f);
-        }
 
         Vector3f zAxis = new Vector3f(p2).cross(p3).normalize();
         Vector3f xAxis = new Vector3f(p2).normalize();
@@ -123,12 +160,9 @@ public class TextDisplayUtil {
      * @return the transformation matrix
      */
     public static Matrix4f textDisplayLine(Vector3f point1, Vector3f point2, float thickness, float roll) {
+        validateLine(point1, point2, thickness, roll);
         Vector3f direction = new Vector3f(point2).sub(point1);
         float length = direction.length();
-
-        if (length < 0.001f) {
-            return new Matrix4f();
-        }
 
         // Find an axis perpendicular to the line direction as the "up" direction
         Vector3f up = new Vector3f(0, 1, 0);
@@ -170,13 +204,9 @@ public class TextDisplayUtil {
      * @return the transformation matrix
      */
     public static Matrix4f textDisplayParallelogram(Vector3f point1, Vector3f point2, Vector3f point3) {
+        validateSurface(point1, point2, point3);
         Vector3f p2 = new Vector3f(point2).sub(point1); // Width vector
         Vector3f p3 = new Vector3f(point3).sub(point1); // Height vector
-
-        // Handle collinear case
-        if (new Vector3f(p2).cross(p3).lengthSquared() < 1.0E-4F) {
-            p3.add(0.0001f, 0.0001f, 0.0001f);
-        }
 
         Vector3f zAxis = new Vector3f(p2).cross(p3).normalize();
         Vector3f xAxis = new Vector3f(p2).normalize();
@@ -209,7 +239,7 @@ public class TextDisplayUtil {
     private static TRSResult computeTRSFromInner2D(
             double m00, double m01, double m10, double m11,
             double tx, double ty,
-            Quaternionf rotation, Vector3f worldOrigin) {
+            float zScale, Quaternionf rotation, Vector3f worldOrigin) {
 
         // World translation = origin + rotation * (tx, ty, 0)
         Vector3f innerTranslation = new Vector3f((float) tx, (float) ty, 0f);
@@ -220,7 +250,7 @@ public class TextDisplayUtil {
         // Check if matrix is already diagonal (no off-diagonal terms)
         if (Math.abs(m01) < 1e-6 && Math.abs(m10) < 1e-6) {
             return new TRSResult(worldTranslation, new Quaternionf(rotation),
-                    new Vector3f((float) m00, (float) m11, 1f), new Quaternionf());
+                    new Vector3f((float) m00, (float) m11, zScale), new Quaternionf());
         }
 
         // Analytical 2x2 SVD: M = U * Sigma * V^T
@@ -280,7 +310,7 @@ public class TextDisplayUtil {
                 0, 0, 1);
         Quaternionf rightRotation = new Quaternionf().setFromNormalized(vtMat).normalize();
 
-        Vector3f scale = new Vector3f((float) sigma1, finalSigma2, 1f);
+        Vector3f scale = new Vector3f((float) sigma1, finalSigma2, zScale);
         return new TRSResult(worldTranslation, leftRotation, scale, rightRotation);
     }
 
@@ -295,12 +325,9 @@ public class TextDisplayUtil {
      * @return TRS result with translation in absolute world coordinates
      */
     public static TRSResult computeParallelogramTRS(Vector3f point1, Vector3f point2, Vector3f point3) {
+        validateSurface(point1, point2, point3);
         Vector3f p2vec = new Vector3f(point2).sub(point1);
         Vector3f p3vec = new Vector3f(point3).sub(point1);
-
-        if (new Vector3f(p2vec).cross(p3vec).lengthSquared() < 1.0E-4F) {
-            p3vec.add(0.0001f, 0.0001f, 0.0001f);
-        }
 
         Vector3f zAxis = new Vector3f(p2vec).cross(p3vec).normalize();
         Vector3f xAxis = new Vector3f(p2vec).normalize();
@@ -321,7 +348,7 @@ public class TextDisplayUtil {
         return computeTRSFromInner2D(
                 8.0 * w, 4.0 * w * s, 0, 4.0 * h,
                 0.4 * w, 0,
-                rotation, point1);
+                1f, rotation, point1);
     }
 
     /**
@@ -335,12 +362,9 @@ public class TextDisplayUtil {
      * @return list of 3 TRS results with translation in absolute world coordinates
      */
     public static List<TRSResult> computeTriangleTRS(Vector3f point1, Vector3f point2, Vector3f point3) {
+        validateSurface(point1, point2, point3);
         Vector3f p2vec = new Vector3f(point2).sub(point1);
         Vector3f p3vec = new Vector3f(point3).sub(point1);
-
-        if (new Vector3f(p2vec).cross(p3vec).lengthSquared() < 1.0E-4F) {
-            p3vec.add(0.0001f, 0.0001f, 0.0001f);
-        }
 
         Vector3f zAxis = new Vector3f(p2vec).cross(p3vec).normalize();
         Vector3f xAxis = new Vector3f(p2vec).normalize();
@@ -363,19 +387,19 @@ public class TextDisplayUtil {
         results.add(computeTRSFromInner2D(
                 4.0 * w, 2.0 * w * s, 0, 2.0 * h,
                 0.2 * w, 0,
-                rotation, point1));
+                0.5f, rotation, point1));
 
         // Piece 1 (top-right, y-shear): linear = [[4w, 2w(s-1)], [0, 2h]], translation = (0.7w, 0)
         results.add(computeTRSFromInner2D(
                 4.0 * w, 2.0 * w * (s - 1.0), 0, 2.0 * h,
                 0.7 * w, 0,
-                rotation, point1));
+                0.5f, rotation, point1));
 
         // Piece 2 (bottom-right, x-shear): linear = [[4w-4ws, 2ws], [-4h, 2h]], translation = (0.2w+0.3ws, 0.3h)
         results.add(computeTRSFromInner2D(
                 4.0 * w - 4.0 * w * s, 2.0 * w * s, -4.0 * h, 2.0 * h,
                 0.2 * w + 0.3 * w * s, 0.3 * h,
-                rotation, point1));
+                0.5f, rotation, point1));
 
         return results;
     }
