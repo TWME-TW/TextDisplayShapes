@@ -7,14 +7,14 @@
     <parent>
         <groupId>dev.twme</groupId>
         <artifactId>TextDisplayShape</artifactId>
-        <version>2.0.2-SNAPSHOT</version>
+        <version>3.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>textdisplayshape-packet</artifactId>
     <packaging>jar</packaging>
     <name>TextDisplayShape Packet</name>
-    <description>Packet-based implementation for TextDisplayShapes using EntityLib/PacketEvents</description>
+    <description>Packet-based implementation for TextDisplayShapes using VirtualEntities and PacketEvents</description>
 
     <build>
         <plugins>
@@ -28,6 +28,15 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>com.github.twme-ai:VirtualEntities</exclude>
+                                    <exclude>com.google.code.gson:gson</exclude>
+                                    <exclude>com.google.errorprone:error_prone_annotations</exclude>
+                                </excludes>
+                            </artifactSet>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -50,23 +59,15 @@
         <dependency>
             <groupId>com.github.retrooper</groupId>
             <artifactId>packetevents-spigot</artifactId>
-            <version>2.12.2</version>
+            <version>2.13.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.github.tofaa2</groupId>
-            <artifactId>spigot</artifactId>
-            <version>3.3.4+b54a52a-SNAPSHOT</version>
+            <groupId>com.github.twme-ai</groupId>
+            <artifactId>VirtualEntities</artifactId>
+            <version>v0.9.0</version>
             <scope>compile</scope>
-            <exclusions>
-                <!-- This artifact already bundles the common and API classes. -->
-                <exclusion>
-                    <groupId>io.github.tofaa2</groupId>
-                    <artifactId>common</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
 </project>
-
