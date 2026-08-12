@@ -7,5 +7,13 @@
   },
   "dependencies": {
     "mineflayer": "4.37.1"
+  },
+  "overrides": {
+    "@azure/msal-node": {
+      "uuid": "14.0.1"
+    },
+    "yggdrasil": {
+      "uuid": "14.0.1"
+    }
   }
 }
