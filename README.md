@@ -15,19 +15,19 @@ Version 3.0.0 replaces the packet module's EntityLib implementation with Virtual
 
 ## Requirements
 
-- Java 21+
+- Java 17+
 - Minecraft 1.19.4+ for Text Display entities
 - PacketEvents 2.13.0+ initialized by the host platform when using the packet module
-- VirtualEntities v0.7.0 is pulled transitively by the packet module
+- VirtualEntities v0.9.0 is pulled transitively by the packet module
 
 ## Installation
 
-Add JitPack:
+Add the TWME releases repository:
 
 ```xml
 <repository>
-    <id>jitpack</id>
-    <url>https://jitpack.io</url>
+    <id>twme-releases</id>
+    <url>https://repo.twme.dev/releases</url>
 </repository>
 ```
 
@@ -35,9 +35,9 @@ Then add the needed module. For packet-only rendering:
 
 ```xml
 <dependency>
-    <groupId>com.github.twme-ai.TextDisplayShapes</groupId>
+    <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-packet</artifactId>
-    <version>v3.0.0</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 
@@ -114,7 +114,7 @@ Builders provide color, brightness, see-through, view range, double-sided, root-
 
 ## Credits
 
-- [TWME-TW/TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes), the upstream project this repository migrates.
+- [TWME-TW/TextDisplayShapes](https://github.com/TWME-TW/TextDisplayShapes), the home of this project.
 - [VirtualEntities](https://github.com/twme-ai/VirtualEntities), the virtual entity lifecycle and metadata library used by packet mode.
 - [PacketEvents](https://github.com/retrooper/packetevents), packet transport and protocol abstractions.
 - [EntityLib](https://github.com/Tofaa2/EntityLib), the previous packet implementation and migration reference.

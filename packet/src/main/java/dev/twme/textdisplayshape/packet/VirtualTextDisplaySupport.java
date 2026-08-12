@@ -1,6 +1,7 @@
 package dev.twme.textdisplayshape.packet;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.util.Quaternion4f;
@@ -11,6 +12,8 @@ import io.github.twme.virtualentities.VirtualEntityManager;
 import io.github.twme.virtualentities.metadata.EntityMetadataFlags;
 import io.github.twme.virtualentities.metadata.EntityMetadataKeys;
 import io.github.twme.virtualentities.metadata.GeneratedEntityMetadataKeys;
+import io.github.twme.virtualentities.metadata.MetadataKey;
+import io.github.twme.virtualentities.metadata.VirtualMetadata;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,6 +27,15 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 final class VirtualTextDisplaySupport {
+    private static final MetadataKey<Integer> LEGACY_INTERPOLATION_START_DELTA_TICKS = MetadataKey.of(
+            "INTERPOLATION_START_DELTA_TICKS",
+            EntityDataTypes.INT
+    );
+    private static final MetadataKey<Integer> LEGACY_INTERPOLATION_DURATION = MetadataKey.of(
+            "INTERPOLATION_DURATION",
+            EntityDataTypes.INT
+    );
+
     private VirtualTextDisplaySupport() {
     }
 
@@ -97,10 +109,16 @@ final class VirtualTextDisplaySupport {
     }
 
     static void setImmediateInterpolation(VirtualEntity entity) {
-        entity.metadata()
-                .set(GeneratedEntityMetadataKeys.Display.TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS, 0)
-                .set(GeneratedEntityMetadataKeys.Display.TRANSFORMATION_INTERPOLATION_DURATION, 0)
-                .set(GeneratedEntityMetadataKeys.Display.POS_ROT_INTERPOLATION_DURATION, 0);
+        VirtualMetadata metadata = entity.metadata();
+        setIfSupported(metadata, LEGACY_INTERPOLATION_START_DELTA_TICKS, 0);
+        setIfSupported(metadata, LEGACY_INTERPOLATION_DURATION, 0);
+        setIfSupported(
+                metadata,
+                GeneratedEntityMetadataKeys.Display.TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS,
+                0
+        );
+        setIfSupported(metadata, GeneratedEntityMetadataKeys.Display.TRANSFORMATION_INTERPOLATION_DURATION, 0);
+        setIfSupported(metadata, GeneratedEntityMetadataKeys.Display.POS_ROT_INTERPOLATION_DURATION, 0);
     }
 
     static void addViewers(VirtualEntity entity, Collection<UUID> viewerUUIDs) {
@@ -179,6 +197,12 @@ final class VirtualTextDisplaySupport {
 
     private static Vector3f vector(org.joml.Vector3f value) {
         return new Vector3f(value.x, value.y, value.z);
+    }
+
+    private static <T> void setIfSupported(VirtualMetadata metadata, MetadataKey<T> key, T value) {
+        if (metadata.schema().find(key.fieldName()).isPresent()) {
+            metadata.set(key, value);
+        }
     }
 
     private static Quaternion4f quaternion(org.joml.Quaternionf value) {
