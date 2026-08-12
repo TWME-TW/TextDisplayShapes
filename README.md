@@ -22,6 +22,8 @@ Version 3.0.0 replaces the packet module's EntityLib implementation with Virtual
 
 ## Installation
 
+### Official TWME Maven repository (recommended)
+
 Add the TWME releases repository:
 
 ```xml
@@ -42,6 +44,28 @@ Then add the needed module. For packet-only rendering:
 ```
 
 The same group and version apply to `textdisplayshape-api`, `textdisplayshape-paper`, and `textdisplayshape-spigot`.
+
+### JitPack fallback
+
+Tagged releases are also available from JitPack as a fallback. JitPack rebuilds
+the selected Git tag, while the TWME repository serves the artifacts produced by
+the project's release workflow. Prefer the TWME repository for production builds.
+
+```xml
+<repository>
+    <id>jitpack</id>
+    <url>https://jitpack.io</url>
+</repository>
+
+<dependency>
+    <groupId>com.github.TWME-TW.TextDisplayShapes</groupId>
+    <artifactId>textdisplayshape-packet</artifactId>
+    <version>v3.0.0</version>
+</dependency>
+```
+
+The same JitPack group and tag apply to `textdisplayshape-api`,
+`textdisplayshape-paper`, and `textdisplayshape-spigot`.
 
 ## Usage
 
