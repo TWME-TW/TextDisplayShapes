@@ -66,7 +66,7 @@ public class PacketParallelogram implements Shape {
             createVirtualEntity(TextDisplayUtil.computeParallelogramTRS(p1, p3, p2));
         }
         if (rootAnchor != null) {
-            VirtualTextDisplaySupport.addViewers(rootAnchor, viewerUUIDs);
+            VirtualTextDisplaySupport.addViewers(entityManager, rootAnchor, viewerUUIDs);
         }
         spawned = true;
     }
@@ -125,10 +125,10 @@ public class PacketParallelogram implements Shape {
         viewerUUIDs.add(playerUUID);
         if (spawned) {
             for (VirtualEntity entity : entities) {
-                VirtualTextDisplaySupport.addViewer(entity, playerUUID);
+                VirtualTextDisplaySupport.addViewer(entityManager, entity, playerUUID);
             }
             if (rootAnchor != null) {
-                VirtualTextDisplaySupport.addViewer(rootAnchor, playerUUID);
+                VirtualTextDisplaySupport.addViewer(entityManager, rootAnchor, playerUUID);
             }
         }
     }

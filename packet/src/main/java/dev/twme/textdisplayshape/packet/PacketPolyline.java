@@ -74,7 +74,7 @@ public class PacketPolyline implements Shape {
             spawnLineSegment(points.get(points.size() - 1), points.get(0));
         }
         if (rootAnchor != null) {
-            VirtualTextDisplaySupport.addViewers(rootAnchor, viewerUUIDs);
+            VirtualTextDisplaySupport.addViewers(entityManager, rootAnchor, viewerUUIDs);
         }
         spawned = true;
     }
@@ -135,10 +135,10 @@ public class PacketPolyline implements Shape {
         viewerUUIDs.add(playerUUID);
         if (spawned) {
             for (VirtualEntity entity : entities) {
-                VirtualTextDisplaySupport.addViewer(entity, playerUUID);
+                VirtualTextDisplaySupport.addViewer(entityManager, entity, playerUUID);
             }
             if (rootAnchor != null) {
-                VirtualTextDisplaySupport.addViewer(rootAnchor, playerUUID);
+                VirtualTextDisplaySupport.addViewer(entityManager, rootAnchor, playerUUID);
             }
         }
     }

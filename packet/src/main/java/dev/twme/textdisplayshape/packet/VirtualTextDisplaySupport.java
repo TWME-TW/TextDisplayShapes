@@ -1,6 +1,5 @@
 package dev.twme.textdisplayshape.packet;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.User;
@@ -9,15 +8,14 @@ import com.github.retrooper.packetevents.util.Vector3f;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import io.github.twme.virtualentities.VirtualEntity;
 import io.github.twme.virtualentities.VirtualEntityManager;
+import io.github.twme.virtualentities.VirtualViewer;
 import io.github.twme.virtualentities.metadata.EntityMetadataFlags;
 import io.github.twme.virtualentities.metadata.EntityMetadataKeys;
 import io.github.twme.virtualentities.metadata.GeneratedEntityMetadataKeys;
 import io.github.twme.virtualentities.metadata.MetadataKey;
 import io.github.twme.virtualentities.metadata.VirtualMetadata;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.joml.Matrix4f;
 
 import java.util.Collection;
@@ -55,7 +53,7 @@ final class VirtualTextDisplaySupport {
             entity.remove();
             throw exception;
         }
-        addViewers(entity, viewerUUIDs);
+        addViewers(manager, entity, viewerUUIDs);
         entity.spawn(SpigotConversionUtil.fromBukkitLocation(origin));
         return entity;
     }
@@ -121,21 +119,25 @@ final class VirtualTextDisplaySupport {
         setIfSupported(metadata, GeneratedEntityMetadataKeys.Display.POS_ROT_INTERPOLATION_DURATION, 0);
     }
 
-    static void addViewers(VirtualEntity entity, Collection<UUID> viewerUUIDs) {
+    static void addViewers(
+            VirtualEntityManager manager,
+            VirtualEntity entity,
+            Collection<UUID> viewerUUIDs
+    ) {
         for (UUID viewerUUID : viewerUUIDs) {
-            addViewer(entity, viewerUUID);
+            addViewer(manager, entity, viewerUUID);
         }
     }
 
-    static void addViewer(VirtualEntity entity, UUID viewerUUID) {
-        Player player = Bukkit.getPlayer(viewerUUID);
-        if (player == null || !player.isOnline()) {
-            return;
+    static void addViewer(VirtualEntityManager manager, VirtualEntity entity, UUID viewerUUID) {
+        VirtualViewer viewer = PacketViewerRegistry.forManager(manager).viewer(viewerUUID);
+        if (viewer != null) {
+            entity.addViewer(viewer);
         }
-        User user = PacketEvents.getAPI().getPlayerManager().getUser(player);
-        if (user != null) {
-            entity.addViewer(user);
-        }
+    }
+
+    static VirtualViewer viewer(VirtualEntityManager manager, User user) {
+        return PacketViewerRegistry.forManager(manager).viewer(user);
     }
 
     static void rebaseEntities(

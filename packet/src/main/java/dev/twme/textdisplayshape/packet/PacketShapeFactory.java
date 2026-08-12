@@ -1,7 +1,10 @@
 package dev.twme.textdisplayshape.packet;
 
+import com.github.retrooper.packetevents.protocol.player.User;
 import io.github.twme.virtualentities.VirtualEntities;
+import io.github.twme.virtualentities.VirtualEntity;
 import io.github.twme.virtualentities.VirtualEntityManager;
+import io.github.twme.virtualentities.VirtualViewer;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
@@ -36,6 +39,20 @@ public class PacketShapeFactory implements AutoCloseable {
 
     public VirtualEntityManager entityManager() {
         return entityManager;
+    }
+
+    /**
+     * Returns the canonical VirtualEntities viewer for this factory's manager and
+     * PacketEvents connection. Reuse it for application-owned virtual entities.
+     */
+    public VirtualViewer viewer(User user) {
+        return VirtualTextDisplaySupport.viewer(entityManager, Objects.requireNonNull(user, "user"));
+    }
+
+    /** Adds an application-owned virtual entity to the canonical connection viewer. */
+    public VirtualEntity addViewer(VirtualEntity entity, User user) {
+        entity.addViewer(viewer(user));
+        return entity;
     }
 
     public PacketTriangle.Builder triangle(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {

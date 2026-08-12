@@ -71,7 +71,7 @@ public class PacketLine implements Shape {
             createVirtualEntity(TextDisplayUtil.textDisplayLine(p2, p1, thickness, -roll));
         }
         if (rootAnchor != null) {
-            VirtualTextDisplaySupport.addViewers(rootAnchor, viewerUUIDs);
+            VirtualTextDisplaySupport.addViewers(entityManager, rootAnchor, viewerUUIDs);
         }
         spawned = true;
     }
@@ -125,10 +125,10 @@ public class PacketLine implements Shape {
         viewerUUIDs.add(playerUUID);
         if (spawned) {
             for (VirtualEntity entity : entities) {
-                VirtualTextDisplaySupport.addViewer(entity, playerUUID);
+                VirtualTextDisplaySupport.addViewer(entityManager, entity, playerUUID);
             }
             if (rootAnchor != null) {
-                VirtualTextDisplaySupport.addViewer(rootAnchor, playerUUID);
+                VirtualTextDisplaySupport.addViewer(entityManager, rootAnchor, playerUUID);
             }
         }
     }
