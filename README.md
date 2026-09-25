@@ -15,10 +15,20 @@ Version 3.0.0 replaces the packet module's EntityLib implementation with Virtual
 
 ## Requirements
 
-- Java 17+
-- Minecraft 1.19.4+ for Text Display entities
-- PacketEvents 2.13.0+ initialized by the host platform when using the packet module
+- Minecraft 26.3 is the compiled and verified target. The modules keep Java 17 bytecode and their API usage is unchanged by this upgrade, so the existing Text Display floor (Minecraft 1.19.4+) is unaffected.
+- Java 17+ at runtime: the published modules keep Java 17 bytecode
+- Java 25 to build from source, because the 26.3 APIs are Java 25 class files
+- PacketEvents 2.14.0+ initialized by the host platform when using the packet module
 - VirtualEntities v0.9.0 is pulled transitively by the packet module
+
+| Component | Version |
+| --- | --- |
+| Minecraft | 26.3 |
+| Paper API | `26.3.build.41-alpha` |
+| Spigot API | `26.3-R0.1-SNAPSHOT` |
+| PacketEvents | 2.14.0 |
+| Build JDK | 25 |
+| Runtime bytecode | Java 17 |
 
 ## Installation
 
@@ -128,13 +138,13 @@ Builders provide color, brightness, see-through, view range, double-sided, root-
 ## Migrating From 2.x
 
 - Remove EntityLib initialization and dependencies.
-- Use PacketEvents 2.13.0+ and let VirtualEntities manage packet-only entities.
+- Use PacketEvents 2.14.0+ and let VirtualEntities manage packet-only entities.
 - Prefer `new PacketShapeFactory(VirtualEntities.create())` at plugin scope; the no-argument constructor remains available for small standalone uses and closes its manager when the factory is closed.
 - `PacketLine`, `PacketPolyline`, `PacketTriangle`, and `PacketParallelogram` now expose `List<VirtualEntity>` from `getEntities()` instead of EntityLib wrappers.
 
 ## Verification
 
-`integration/mineflayer/run-e2e.sh` launches Paper 1.21.11 with PacketEvents, creates a packet-only root-anchored line, and verifies from Mineflayer that Text Display spawn, metadata rebase, root movement, and packet bundle ordering all work. The same test can run from the manual GitHub Actions E2E workflow.
+`integration/mineflayer/run-e2e.sh` launches Paper 1.21.11 with PacketEvents, creates a packet-only root-anchored line, and verifies from Mineflayer that Text Display spawn, metadata rebase, root movement, and packet bundle ordering all work. The same test can run from the manual GitHub Actions E2E workflow. Mineflayer still only speaks up to Minecraft 26.1, so that harness keeps its 1.21.11 server even though the modules target 26.3.
 
 ## Credits
 

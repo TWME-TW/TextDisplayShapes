@@ -9,7 +9,7 @@
     <version>1.0.0</version>
 
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -37,13 +37,36 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.21.11-R0.1-SNAPSHOT</version>
+            <version>26.3.build.41-alpha</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.github.retrooper</groupId>
             <artifactId>packetevents-spigot</artifactId>
-            <version>2.13.0</version>
+            <version>2.14.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!--
+        Same Adventure 5.2.0 pins as the packet module: PacketEvents pull in Adventure
+        4.26.1 and would otherwise win Maven's nearest-wins mediation for the
+        compile classpath. See packet/pom.xml.
+        -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>5.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>5.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>5.2.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
