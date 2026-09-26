@@ -26,7 +26,9 @@ class TextDisplayUtilTest {
                 new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(5f, 0f, 0f)},
                 new Vector3f[] {new Vector3f(5f, 0f, 0f), new Vector3f(0f, 0f, 0f)},
                 new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(0f, 5f, 0f)},
+                new Vector3f[] {new Vector3f(0f, 5f, 0f), new Vector3f(0f, 0f, 0f)},
                 new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(0f, 0f, 5f)},
+                new Vector3f[] {new Vector3f(0f, 0f, 5f), new Vector3f(0f, 0f, 0f)},
                 new Vector3f[] {new Vector3f(2f, 3f, 4f), new Vector3f(7f, 5f, 1f)});
 
         for (Vector3f[] endpoints : cases) {
@@ -40,16 +42,20 @@ class TextDisplayUtilTest {
 
     @Test
     void parallelogramBackgroundCornersMatchTheirVertices() {
-        Vector3f[] vertices = points(2f, 3f, 4f, 7f, 3f, 4f, 2f, 3f, 8f);
-        Matrix4f expected = TextDisplayUtil.textDisplayParallelogram(
-                vertices[0], vertices[1], vertices[2]);
-        Matrix4f packetTransform = reconstruct(TextDisplayUtil.computeParallelogramTRS(
-                vertices[0], vertices[1], vertices[2]));
+        for (Vector3f[] vertices : List.of(
+                points(2f, 3f, 4f, 7f, 3f, 4f, 2f, 3f, 8f),
+                points(2f, 3f, 4f, 2f, 3f, 8f, 7f, 3f, 4f),
+                points(2f, 3f, 8f, 2f, 3f, 4f, 2f, 7f, 8f))) {
+            Matrix4f expected = TextDisplayUtil.textDisplayParallelogram(
+                    vertices[0], vertices[1], vertices[2]);
+            Matrix4f packetTransform = reconstruct(TextDisplayUtil.computeParallelogramTRS(
+                    vertices[0], vertices[1], vertices[2]));
 
-        for (Matrix4f transform : List.of(expected, packetTransform)) {
-            assertVectorEquals(vertices[0], transform.transformPosition(new Vector3f(BOTTOM_LEFT)));
-            assertVectorEquals(vertices[1], transform.transformPosition(new Vector3f(BOTTOM_RIGHT)));
-            assertVectorEquals(vertices[2], transform.transformPosition(new Vector3f(TOP_LEFT)));
+            for (Matrix4f transform : List.of(expected, packetTransform)) {
+                assertVectorEquals(vertices[0], transform.transformPosition(new Vector3f(BOTTOM_LEFT)));
+                assertVectorEquals(vertices[1], transform.transformPosition(new Vector3f(BOTTOM_RIGHT)));
+                assertVectorEquals(vertices[2], transform.transformPosition(new Vector3f(TOP_LEFT)));
+            }
         }
     }
 

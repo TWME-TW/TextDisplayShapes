@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -70,9 +71,15 @@ public class TextDisplayUtil {
     }
 
     private static Quaternionf orientation(Vector3f zAxis, Vector3f yAxis) {
-        // JOML lookAlong uses its direction as local +Z. Negating zAxis mirrors
-        // the local X axis, extending lines and faces away from their vertices.
-        return new Quaternionf().lookAlong(zAxis, yAxis).conjugate();
+        // Construct the basis explicitly. Quaternionf.lookAlong has produced
+        // different handedness for some axes across JOML versions used by
+        // Minecraft servers; the supplied vertices must determine local +X.
+        Vector3f xAxis = new Vector3f(yAxis).cross(zAxis).normalize();
+        Matrix3f basis = new Matrix3f()
+                .setColumn(0, xAxis)
+                .setColumn(1, yAxis)
+                .setColumn(2, zAxis);
+        return new Quaternionf().setFromNormalized(basis).normalize();
     }
 
     /**
