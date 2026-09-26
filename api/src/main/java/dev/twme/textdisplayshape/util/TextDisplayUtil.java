@@ -69,6 +69,12 @@ public class TextDisplayUtil {
         return new Matrix4f(mat).mul(shearMatrix);
     }
 
+    private static Quaternionf orientation(Vector3f zAxis, Vector3f yAxis) {
+        // JOML lookAlong uses its direction as local +Z. Negating zAxis mirrors
+        // the local X axis, extending lines and faces away from their vertices.
+        return new Quaternionf().lookAlong(zAxis, yAxis).conjugate();
+    }
+
     /**
      * Gets the transformation matrix for a unit square.
      *
@@ -116,7 +122,7 @@ public class TextDisplayUtil {
         float height = p3.dot(yAxis);
         float p3Width = p3.dot(xAxis);
 
-        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        Quaternionf rotation = orientation(zAxis, yAxis);
 
         float shear = (width > 0.001f) ? p3Width / width : 0.0f;
 
@@ -174,7 +180,7 @@ public class TextDisplayUtil {
         Vector3f xAxis = new Vector3f(direction).normalize();
         Vector3f yAxis = new Vector3f(zAxis).cross(xAxis).normalize();
 
-        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        Quaternionf rotation = orientation(zAxis, yAxis);
 
         // Apply roll rotation around the line axis (X axis in local space)
         Quaternionf rollRotation = new Quaternionf().rotateX(roll);
@@ -216,7 +222,7 @@ public class TextDisplayUtil {
         float height = p3.dot(yAxis);
         float p3Width = p3.dot(xAxis);
 
-        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        Quaternionf rotation = orientation(zAxis, yAxis);
 
         // Calculate shear amount (transforms rectangle into parallelogram)
         float shear = (width > 0.001f) ? p3Width / width : 0.0f;
@@ -337,7 +343,7 @@ public class TextDisplayUtil {
         float height = p3vec.dot(yAxis);
         float p3Width = p3vec.dot(xAxis);
 
-        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        Quaternionf rotation = orientation(zAxis, yAxis);
         float shear = (width > 0.001f) ? p3Width / width : 0.0f;
 
         // Inner 2x2 = scale(w,h) * shear(s,0) * unitSquare
@@ -374,7 +380,7 @@ public class TextDisplayUtil {
         float height = p3vec.dot(yAxis);
         float p3Width = p3vec.dot(xAxis);
 
-        Quaternionf rotation = new Quaternionf().lookAlong(new Vector3f(zAxis).mul(-1f), yAxis).conjugate();
+        Quaternionf rotation = orientation(zAxis, yAxis);
         float shear = (width > 0.001f) ? p3Width / width : 0.0f;
 
         double w = width;

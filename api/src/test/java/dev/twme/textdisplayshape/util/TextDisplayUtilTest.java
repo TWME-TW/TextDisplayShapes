@@ -13,6 +13,59 @@ import org.junit.jupiter.api.Test;
 class TextDisplayUtilTest {
 
     private static final float EPSILON = 1.0E-4F;
+    // A single-space Text Display background has width 4 and height 9. After the
+    // vanilla renderer's 180-degree Y rotation, -0.025 scale, and offset, these
+    // are the local coordinates of its corners before the shape transformation.
+    private static final Vector3f BOTTOM_LEFT = new Vector3f(-0.05f, 0f, 0f);
+    private static final Vector3f BOTTOM_RIGHT = new Vector3f(0.075f, 0f, 0f);
+    private static final Vector3f TOP_LEFT = new Vector3f(-0.05f, 0.25f, 0f);
+
+    @Test
+    void lineBackgroundRunsBetweenItsEndpoints() {
+        List<Vector3f[]> cases = List.of(
+                new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(5f, 0f, 0f)},
+                new Vector3f[] {new Vector3f(5f, 0f, 0f), new Vector3f(0f, 0f, 0f)},
+                new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(0f, 5f, 0f)},
+                new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(0f, 0f, 5f)},
+                new Vector3f[] {new Vector3f(2f, 3f, 4f), new Vector3f(7f, 5f, 1f)});
+
+        for (Vector3f[] endpoints : cases) {
+            Matrix4f transform = TextDisplayUtil.textDisplayLine(endpoints[0], endpoints[1], 0.05f);
+            Vector3f start = new Vector3f(BOTTOM_LEFT).add(0f, 0.125f, 0f);
+            Vector3f end = new Vector3f(BOTTOM_RIGHT).add(0f, 0.125f, 0f);
+            assertVectorEquals(endpoints[0], transform.transformPosition(start));
+            assertVectorEquals(endpoints[1], transform.transformPosition(end));
+        }
+    }
+
+    @Test
+    void parallelogramBackgroundCornersMatchTheirVertices() {
+        Vector3f[] vertices = points(2f, 3f, 4f, 7f, 3f, 4f, 2f, 3f, 8f);
+        Matrix4f expected = TextDisplayUtil.textDisplayParallelogram(
+                vertices[0], vertices[1], vertices[2]);
+        Matrix4f packetTransform = reconstruct(TextDisplayUtil.computeParallelogramTRS(
+                vertices[0], vertices[1], vertices[2]));
+
+        for (Matrix4f transform : List.of(expected, packetTransform)) {
+            assertVectorEquals(vertices[0], transform.transformPosition(new Vector3f(BOTTOM_LEFT)));
+            assertVectorEquals(vertices[1], transform.transformPosition(new Vector3f(BOTTOM_RIGHT)));
+            assertVectorEquals(vertices[2], transform.transformPosition(new Vector3f(TOP_LEFT)));
+        }
+    }
+
+    @Test
+    void triangleBackgroundPiecesReachTheRequestedVertices() {
+        Vector3f[] vertices = points(0f, 0f, 0f, 4f, 0f, 0f, 0f, 3f, 0f);
+        List<TRSResult> pieces = TextDisplayUtil.computeTriangleTRS(
+                vertices[0], vertices[1], vertices[2]);
+
+        assertVectorEquals(vertices[0], reconstruct(pieces.get(0))
+                .transformPosition(new Vector3f(BOTTOM_LEFT)));
+        assertVectorEquals(vertices[1], reconstruct(pieces.get(1))
+                .transformPosition(new Vector3f(BOTTOM_RIGHT)));
+        assertVectorEquals(vertices[2], reconstruct(pieces.get(2))
+                .transformPosition(new Vector3f(TOP_LEFT)));
+    }
 
     @Test
     void parallelogramTrsReconstructsTransformationMatrix() {
@@ -106,5 +159,10 @@ class TextDisplayUtilTest {
 
     private static void assertMatrixEquals(Matrix4f expected, Matrix4f actual) {
         assertTrue(expected.equals(actual, EPSILON), () -> "expected:\n" + expected + "\nbut was:\n" + actual);
+    }
+
+    private static void assertVectorEquals(Vector3f expected, Vector3f actual) {
+        assertTrue(expected.distance(actual) < EPSILON,
+                () -> "expected " + expected + " but was " + actual);
     }
 }
