@@ -3,6 +3,10 @@ package dev.twme.textdisplayshape.bukkit;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
+import dev.twme.textdisplayshape.shape.BoxFaces;
+import dev.twme.textdisplayshape.shape.BoxOutline;
+import dev.twme.textdisplayshape.shape.ShapeStyle;
+
 import java.util.List;
 
 /**
@@ -63,5 +67,42 @@ public class BukkitShapeFactory {
      */
     public BukkitParallelogram.Builder parallelogram(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
         return new BukkitParallelogram.Builder(origin, p1, p2, p3);
+    }
+
+    /**
+     * Creates the twelve edges of an axis-aligned box, sharing one style.
+     * Call {@link BoxOutline#setBounds} to resize or move it in place.
+     *
+     * @param origin    the spawn location
+     * @param min       one corner of the box (world coordinates)
+     * @param max       the opposite corner (world coordinates)
+     * @param thickness the edge thickness
+     * @param style     appearance and animation settings for every edge
+     * @return the unspawned outline
+     */
+    public BoxOutline boxOutline(Location origin, Vector3f min, Vector3f max, float thickness, ShapeStyle style) {
+        BoxOutline outline = new BoxOutline(min, max,
+                edge -> line(origin, edge.from(), edge.to(), thickness).style(style).build());
+        outline.setInterpolationDuration(style.interpolationDuration());
+        outline.setTeleportDuration(style.teleportDuration());
+        return outline;
+    }
+
+    /**
+     * Creates the six outward-facing faces of an axis-aligned box.
+     * Call {@link BoxFaces#setBounds} to resize or move it in place.
+     *
+     * @param origin the spawn location
+     * @param min    one corner of the box (world coordinates)
+     * @param max    the opposite corner (world coordinates)
+     * @param style  appearance and animation settings for every face
+     * @return the unspawned faces
+     */
+    public BoxFaces boxFaces(Location origin, Vector3f min, Vector3f max, ShapeStyle style) {
+        BoxFaces faces = new BoxFaces(min, max,
+                face -> parallelogram(origin, face.corner(), face.first(), face.second()).style(style).build());
+        faces.setInterpolationDuration(style.interpolationDuration());
+        faces.setTeleportDuration(style.teleportDuration());
+        return faces;
     }
 }

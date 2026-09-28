@@ -120,6 +120,50 @@ The packet module never creates server-side entities. It resolves viewer UUIDs t
 
 `teleportOrigin(x, y, z)` preserves a shape's world-space geometry by shifting Text Display translation metadata while relocating its virtual origin. For root-anchored shapes, the metadata updates and root teleport are sent in one VirtualEntities bundle on bundle-capable clients, avoiding an intermediate visual jump.
 
+## Animation and updates
+
+Spawned shapes can change after they appear. Updates reuse the existing Text Display entities, so the client animates them instead of respawning anything:
+
+```java
+PacketLine line = shapes.line(origin, start, end, 0.05f)
+        .interpolationDuration(4)   // geometry and color changes animate over 4 ticks
+        .teleportDuration(2)        // translate() animates over 2 ticks
+        .build();
+line.addViewer(player.getUniqueId());
+line.spawn();
+
+line.setPoints(newStart, newEnd);   // stretch or rotate the line in place
+line.setColor(0x8000FF00);          // fade to translucent green
+line.translate(0, 1, 0);            // move the whole shape one block up
+```
+
+- `setPoints(...)` is available on `LineShape`, `PolylineShape`, `TriangleShape`, and `ParallelogramShape`. In packet mode, every part of a shape is updated in one VirtualEntities bundle, so it changes in a single frame.
+- A polyline whose point count grows animates the existing segments; new segments appear immediately and removed ones disappear.
+- Text Display background color follows the same interpolation timing as the transformation.
+- `translate` moves the geometry, unlike `teleportOrigin`, which only rebases the entities. Root-anchored packet shapes move by teleporting only their anchor.
+- Invalid geometry, such as a zero-length line, is rejected before anything is sent or stored.
+
+### Styles, groups, and boxes
+
+`ShapeStyle` bundles appearance and animation settings and applies them to any builder with `style(...)`. `ShapeGroup` manages several shapes as one: lifecycle, viewers, color, animation settings, and movement. `BoxOutline` (12 edges) and `BoxFaces` (6 outward-facing faces) are groups whose `setBounds` moves every part in place, which makes animated selection boxes and cursors cheap:
+
+```java
+ShapeStyle style = ShapeStyle.DEFAULT.withColor(0xC0FFFFFF).withInterpolationDuration(2);
+BoxOutline cursor = shapes.boxOutline(origin, min, max, 0.02f, style);
+cursor.addViewer(player.getUniqueId());
+cursor.spawn();
+
+cursor.setBounds(newMin, newMax);    // glides to the next cell
+shapes.batch(() -> {                 // packet mode: several shapes in one frame
+    cursor.setColor(0xC0FF4040);
+    preview.setPoints(a, b, c);
+});
+```
+
+Direct Paper and Spigot shapes support the same updates through the Bukkit Display API. Their updates must run on the thread that owns the entities.
+
+`ShapeGeometry` and `BoxGeometry` expose the platform-neutral transforms and box edges and faces for custom renderers.
+
 ## Shape API
 
 All shape implementations support:
@@ -133,8 +177,13 @@ All shape implementations support:
 | `getViewerUUIDs()` | Return a copy of configured viewers. |
 | `getEntityUUIDs()` | Return Text Display UUIDs for the shape. |
 | `teleportOrigin(x, y, z)` | Rebase the virtual origin without moving the rendered geometry. |
+| `translate(dx, dy, dz)` | Move the rendered geometry, animated by the teleport duration. |
+| `setColor(argb)` / `getColor()` | Change the background color, animated by the interpolation duration. |
+| `setInterpolationDuration(ticks)` | Animate later geometry and color updates. |
+| `setTeleportDuration(ticks)` | Animate later `translate` calls (0-59 ticks). |
+| `getEntityCount()` | Count the Text Display entities in use. |
 
-Builders provide color, brightness, see-through, view range, double-sided, root-anchor, and line roll controls. The supported shape types are Line, Polyline, Triangle, and Parallelogram.
+Builders provide color, brightness, see-through, view range, double-sided, root-anchor, interpolation duration, teleport duration, style, and line roll controls. The supported shape types are Line, Polyline, Triangle, and Parallelogram, plus the `BoxOutline` and `BoxFaces` groups.
 
 ## Migrating From 2.x
 
@@ -145,7 +194,7 @@ Builders provide color, brightness, see-through, view range, double-sided, root-
 
 ## Verification
 
-`integration/mineflayer/run-e2e.sh` launches Paper 1.21.11 with PacketEvents, creates a packet-only root-anchored line, and verifies from Mineflayer that Text Display spawn, metadata rebase, root movement, and packet bundle ordering all work. The same test can run from the manual GitHub Actions E2E workflow. Mineflayer still only speaks up to Minecraft 26.1, so that harness keeps its 1.21.11 server even though the modules target 26.3.
+`integration/mineflayer/run-e2e.sh` launches Paper 1.21.11 with PacketEvents, creates a packet-only root-anchored line, and verifies from Mineflayer that Text Display spawn, metadata rebase, root movement, and packet bundle ordering all work. It also checks that an animated `setPoints` and `setColor` update reuses the same entity with the requested interpolation, and that `translate` moves the root anchor with the requested teleport duration. The fixture is compiled against the version installed from the current checkout. The same test can run from the manual GitHub Actions E2E workflow. Mineflayer still only speaks up to Minecraft 26.1, so that harness keeps its 1.21.11 server even though the modules target 26.3.
 
 ## Credits
 
