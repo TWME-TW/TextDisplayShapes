@@ -35,7 +35,9 @@ trap cleanup EXIT
 mkdir -p "${CACHE_DIR}" "${SERVER_DIR}/plugins"
 
 mvn -B -DskipTests install
-mvn -B -f "${PROJECT_DIR}/integration/paper-plugin/pom.xml" clean package
+project_version="$(mvn -B -q -f "${PROJECT_DIR}/pom.xml" help:evaluate -Dexpression=project.version -DforceStdout)"
+mvn -B -f "${PROJECT_DIR}/integration/paper-plugin/pom.xml" clean package \
+  -Dtextdisplayshapes.version="${project_version}"
 
 paper_metadata="$(curl --fail --silent --show-error --location "${PAPER_API}")"
 paper_url="$(jq -er '.downloads["server:default"].url' <<<"${paper_metadata}")"

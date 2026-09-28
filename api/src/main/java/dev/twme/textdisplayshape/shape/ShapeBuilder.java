@@ -69,6 +69,44 @@ public interface ShapeBuilder<T extends Shape> {
     }
 
     /**
+     * Sets how many ticks geometry and color updates take to animate.
+     *
+     * @param ticks non-negative duration in ticks
+     * @return this builder
+     */
+    default ShapeBuilder<T> interpolationDuration(int ticks) {
+        return this;
+    }
+
+    /**
+     * Sets how many ticks {@link Shape#translate} movements take to animate.
+     *
+     * @param ticks duration between 0 and {@link Shape#MAX_TELEPORT_DURATION}
+     * @return this builder
+     */
+    default ShapeBuilder<T> teleportDuration(int ticks) {
+        return this;
+    }
+
+    /**
+     * Applies every setting of a style.
+     *
+     * @param style the style to apply
+     * @return this builder
+     */
+    default ShapeBuilder<T> style(ShapeStyle style) {
+        color(style.argbColor());
+        doubleSided(style.doubleSided());
+        brightness(style.blockLight(), style.skyLight());
+        seeThrough(style.seeThrough());
+        viewRange(style.viewRange());
+        rootAnchor(style.rootAnchor());
+        interpolationDuration(style.interpolationDuration());
+        teleportDuration(style.teleportDuration());
+        return this;
+    }
+
+    /**
      * Builds the shape instance.
      *
      * @return the built shape

@@ -79,6 +79,28 @@ public final class TextDisplayShapesIntegrationPlugin extends JavaPlugin {
                 player.sendMessage("TDS_RELOCATED");
             }
         }, 20L);
+
+        // Animated geometry update: the existing entity is reused and the
+        // client interpolates to the longer line over five ticks.
+        getServer().getScheduler().runTaskLater(this, () -> {
+            if (line.isSpawned()) {
+                line.setInterpolationDuration(5);
+                line.setPoints(
+                        new Vector3f((float) origin.getX() + 2, (float) origin.getY(), (float) origin.getZ()),
+                        new Vector3f((float) origin.getX() + 6, (float) origin.getY(), (float) origin.getZ()));
+                line.setColor(Color.fromARGB(120, 100, 255, 100));
+                player.sendMessage("TDS_ANIMATED");
+            }
+        }, 40L);
+
+        // Animated movement: only the root anchor moves, with a teleport duration.
+        getServer().getScheduler().runTaskLater(this, () -> {
+            if (line.isSpawned()) {
+                line.setTeleportDuration(3);
+                line.translate(0, 1, 0);
+                player.sendMessage("TDS_TRANSLATED:" + line.getRootAnchor().entityId());
+            }
+        }, 60L);
         return true;
     }
 }

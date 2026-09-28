@@ -16,7 +16,8 @@ import io.github.twme.virtualentities.metadata.MetadataKey;
 import io.github.twme.virtualentities.metadata.VirtualMetadata;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
-import org.joml.Matrix4f;
+
+import dev.twme.textdisplayshape.geometry.DisplayTransform;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -74,22 +75,6 @@ final class VirtualTextDisplaySupport {
                 .set(GeneratedEntityMetadataKeys.Display.VIEW_RANGE, viewRange);
     }
 
-    static void setTransformFromMatrix(VirtualEntity entity, Matrix4f matrix) {
-        org.joml.Vector3f translation = new org.joml.Vector3f();
-        matrix.getTranslation(translation);
-        org.joml.Vector3f scale = new org.joml.Vector3f();
-        matrix.getScale(scale);
-        org.joml.Quaternionf rotation = new org.joml.Quaternionf();
-        matrix.getUnnormalizedRotation(rotation);
-        setTransform(
-                entity,
-                translation,
-                scale,
-                rotation,
-                null
-        );
-    }
-
     static void setTransform(
             VirtualEntity entity,
             org.joml.Vector3f translation,
@@ -101,9 +86,46 @@ final class VirtualTextDisplaySupport {
                 .set(GeneratedEntityMetadataKeys.Display.TRANSLATION, vector(translation))
                 .set(GeneratedEntityMetadataKeys.Display.SCALE, vector(scale))
                 .set(GeneratedEntityMetadataKeys.Display.LEFT_ROTATION, quaternion(leftRotation));
-        if (rightRotation != null) {
-            entity.metadata().set(GeneratedEntityMetadataKeys.Display.RIGHT_ROTATION, quaternion(rightRotation));
-        }
+        entity.metadata().set(
+                GeneratedEntityMetadataKeys.Display.RIGHT_ROTATION,
+                quaternion(rightRotation == null ? new org.joml.Quaternionf() : rightRotation)
+        );
+    }
+
+    static void setTransform(VirtualEntity entity, DisplayTransform transform) {
+        setTransform(
+                entity,
+                transform.translation(),
+                transform.scale(),
+                transform.leftRotation(),
+                transform.rightRotation()
+        );
+    }
+
+    static void setBackgroundColor(VirtualEntity entity, int argbColor) {
+        entity.metadata().set(GeneratedEntityMetadataKeys.TextDisplay.BACKGROUND_COLOR, argbColor);
+    }
+
+    /**
+     * Restarts transformation interpolation: the client animates from the
+     * currently rendered state to the newly sent one over {@code ticks}.
+     * Text Display background color and opacity follow the same timing.
+     */
+    static void setInterpolation(VirtualEntity entity, int ticks) {
+        VirtualMetadata metadata = entity.metadata();
+        setIfSupported(metadata, LEGACY_INTERPOLATION_START_DELTA_TICKS, 0);
+        setIfSupported(metadata, LEGACY_INTERPOLATION_DURATION, ticks);
+        setIfSupported(
+                metadata,
+                GeneratedEntityMetadataKeys.Display.TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS,
+                0
+        );
+        setIfSupported(metadata, GeneratedEntityMetadataKeys.Display.TRANSFORMATION_INTERPOLATION_DURATION, ticks);
+    }
+
+    /** Sets how long position updates take to animate, where the client supports it (1.20.2+). */
+    static void setTeleportDuration(VirtualEntity entity, int ticks) {
+        setIfSupported(entity.metadata(), GeneratedEntityMetadataKeys.Display.POS_ROT_INTERPOLATION_DURATION, ticks);
     }
 
     static void setImmediateInterpolation(VirtualEntity entity) {

@@ -8,6 +8,10 @@ import io.github.twme.virtualentities.VirtualViewer;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
+import dev.twme.textdisplayshape.shape.BoxFaces;
+import dev.twme.textdisplayshape.shape.BoxOutline;
+import dev.twme.textdisplayshape.shape.ShapeStyle;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -69,6 +73,40 @@ public class PacketShapeFactory implements AutoCloseable {
 
     public PacketParallelogram.Builder parallelogram(Location origin, Vector3f p1, Vector3f p2, Vector3f p3) {
         return new PacketParallelogram.Builder(origin, p1, p2, p3).withEntityManager(entityManager);
+    }
+
+    /**
+     * The twelve edges of an axis-aligned box, sharing one style. Call
+     * {@link BoxOutline#setBounds} to resize or move it in place.
+     */
+    public BoxOutline boxOutline(Location origin, Vector3f min, Vector3f max, float thickness, ShapeStyle style) {
+        Objects.requireNonNull(style, "style");
+        BoxOutline outline = new BoxOutline(min, max,
+                edge -> line(origin, edge.from(), edge.to(), thickness).style(style).build());
+        outline.setInterpolationDuration(style.interpolationDuration());
+        outline.setTeleportDuration(style.teleportDuration());
+        return outline;
+    }
+
+    /**
+     * The six outward-facing faces of an axis-aligned box, sharing one style.
+     * Call {@link BoxFaces#setBounds} to resize or move it in place.
+     */
+    public BoxFaces boxFaces(Location origin, Vector3f min, Vector3f max, ShapeStyle style) {
+        Objects.requireNonNull(style, "style");
+        BoxFaces faces = new BoxFaces(min, max,
+                face -> parallelogram(origin, face.corner(), face.first(), face.second()).style(style).build());
+        faces.setInterpolationDuration(style.interpolationDuration());
+        faces.setTeleportDuration(style.teleportDuration());
+        return faces;
+    }
+
+    /**
+     * Runs {@code updates} as one VirtualEntities bundle, so that changes to
+     * several shapes from this factory appear to viewers in the same frame.
+     */
+    public void batch(Runnable updates) {
+        entityManager.bundle(updates);
     }
 
     @Override
