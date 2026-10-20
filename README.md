@@ -4,6 +4,7 @@ TextDisplayShapes renders geometric shapes with Minecraft Text Display entities.
 
 Version 3.0.0 replaces the packet module's EntityLib implementation with VirtualEntities and PacketEvents.
 Version 3.0.1 adds Minecraft 26.3 support and corrects Text Display line and face orientation.
+Version 3.1.0 adds in-place animated updates (`setPoints`, `setColor`, `translate`, interpolation and teleport durations), reusable `ShapeStyle`, `ShapeGroup`, box outlines and faces, and batched packet updates.
 
 ## Modules
 
@@ -50,7 +51,7 @@ Then add the needed module. For packet-only rendering:
 <dependency>
     <groupId>dev.twme</groupId>
     <artifactId>textdisplayshape-packet</artifactId>
-    <version>3.0.1</version>
+    <version>3.1.0</version>
 </dependency>
 ```
 
@@ -71,7 +72,7 @@ the project's release workflow. Prefer the TWME repository for production builds
 <dependency>
     <groupId>com.github.TWME-TW.TextDisplayShapes</groupId>
     <artifactId>textdisplayshape-packet</artifactId>
-    <version>v3.0.1</version>
+    <version>v3.1.0</version>
 </dependency>
 ```
 
